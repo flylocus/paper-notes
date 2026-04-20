@@ -88,6 +88,9 @@
 ## 一句话说明
 `/Users/shenfei/clawd/paper-notes` 现在是主版本；`Downloads/paper-notes-project/skills/paper-notes` 现在是历史参考版本；旧 skill 路径只保留兼容入口。
 
+补充：
+- 如果需要快速判断“哪个目录还能改、哪个目录只可参考”，先看 `docs/PROJECT_RELATIONSHIP.md`
+
 ## 补充：正式生产基线
 目录迁移完成后，仍然需要避免“同一主目录下多条脚本链并存造成误用”。
 

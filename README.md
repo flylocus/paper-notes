@@ -48,6 +48,7 @@ paper-notes/
 
 - 正式边界：[docs/PRODUCTION_BASELINE.md](/Users/shenfei/clawd/paper-notes/docs/PRODUCTION_BASELINE.md)
 - 运行地图：[docs/RUNBOOK_PAPER_NOTES.md](/Users/shenfei/clawd/paper-notes/docs/RUNBOOK_PAPER_NOTES.md)
+- 目录主从关系：[docs/PROJECT_RELATIONSHIP.md](/Users/shenfei/clawd/paper-notes/docs/PROJECT_RELATIONSHIP.md)
 - 目录重组与升格记录：[docs/REORG_PLAN.md](/Users/shenfei/clawd/paper-notes/docs/REORG_PLAN.md)
 - 自动化接入说明：[docs/AUTOMATION_ENTRYPOINTS.md](/Users/shenfei/clawd/paper-notes/docs/AUTOMATION_ENTRYPOINTS.md)
 - 正式可复用样例索引：[outputs/READY_INDEX.md](/Users/shenfei/clawd/paper-notes/outputs/READY_INDEX.md)
