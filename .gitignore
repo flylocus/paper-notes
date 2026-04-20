@@ -1,0 +1,15 @@
+.DS_Store
+**/.DS_Store
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.venv/
+venv/
+outputs/
+fused/
+rendered/
+inputs/
+scripts/outputs/
+*.pdf
