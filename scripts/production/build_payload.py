@@ -17,6 +17,12 @@ import json
 import os
 
 
+def flatten_items(items):
+    if not items:
+        return []
+    return [x for group in items for x in group]
+
+
 def load_json(path):
     with open(path, 'r', encoding='utf-8') as f:
         return json.load(f)
@@ -33,9 +39,9 @@ def main():
     ap.add_argument('--one-line', default='这是一篇值得关注的论文。')
     ap.add_argument('--research-problem', default='待补充')
     ap.add_argument('--method-framework', default='待补充')
-    ap.add_argument('--industry-implications', nargs='*', default=[])
-    ap.add_argument('--core-contributions', nargs='*', default=[])
-    ap.add_argument('--key-results', nargs='*', default=[])
+    ap.add_argument('--industry-implications', nargs='+', action='append', default=[])
+    ap.add_argument('--core-contributions', nargs='+', action='append', default=[])
+    ap.add_argument('--key-results', nargs='+', action='append', default=[])
     args = ap.parse_args()
 
     meta = load_json(args.metadata)
@@ -62,10 +68,10 @@ def main():
     article_payload = {
         **card_payload,
         'A_research_problem': args.research_problem,
-        'B_core_contributions': args.core_contributions,
+        'B_core_contributions': flatten_items(args.core_contributions),
         'C_method_framework': args.method_framework,
-        'D_key_results': args.key_results,
-        'E_industry_implications': args.industry_implications,
+        'D_key_results': flatten_items(args.key_results),
+        'E_industry_implications': flatten_items(args.industry_implications),
         'F_one_line_judgement': args.one_line,
         'discussion_notes': [
             f"Generated from verified metadata: {os.path.basename(args.metadata)}",
