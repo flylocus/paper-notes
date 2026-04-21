@@ -23,6 +23,12 @@
 python3 scripts/production/daily_runner.py phase1 --date 20260421
 ```
 
+当前已存在的正式自动化：
+- `Paper Notes Nightly Phase1`
+- 执行时间：工作日凌晨 1 点（北京时间）
+- 工作目录：`/Users/shenfei/clawd/paper-notes`
+- 目标：检查当日 `inputs/chatgpt/YYYYMMDD.txt` 与 `inputs/grok/YYYYMMDD.txt` 是否齐全；齐全则运行 phase1，生成候选池与 Top 3 建议；缺输入则明确报缺。
+
 ### 2. 发布前治理
 
 ```bash

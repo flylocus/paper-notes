@@ -47,7 +47,7 @@ def parse_chatgpt_input(text):
         why_valuable = ""
         keywords = []
         for line in lines:
-            m = re.search(r'arXiv:\s*(\d{4}\.\d+)', line)
+            m = re.search(r'arXiv:\s*(?:https?://arxiv\.org/abs/)?(\d{4}\.\d+)', line)
             if m:
                 arxiv_id = m.group(1)
             if 'Why valuable' in line or '为什么' in line:
