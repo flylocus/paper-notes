@@ -1,0 +1,185 @@
+<section id="nice">
+<style>
+:root{
+  --primary:#0B1430;
+  --accent:#4CC3FF;
+  --accent-2:#2F6BFF;
+  --bg-soft:#E6F2FF;
+  --text:#1F2A37;
+  --muted:#6B7280;
+}
+
+#nice, #write{
+  color:var(--text);
+  font-size:16px;
+  line-height:1.8;
+}
+
+#nice h1, #write h1{
+  color:var(--primary);
+  font-size:22px;
+  font-weight:800;
+  border-left:5px solid var(--accent);
+  padding-left:12px;
+  margin:22px 0 14px;
+}
+
+#nice h2, #write h2{
+  color:var(--primary);
+  font-size:18px;
+  font-weight:700;
+  margin:18px 0 10px;
+}
+
+#nice h3, #write h3{
+  color:var(--accent-2);
+  font-size:16px;
+  font-weight:700;
+  margin:14px 0 8px;
+}
+
+#nice hr, #write hr{
+  border:0;
+  border-top:1px solid #D9E6FF;
+  margin:18px 0;
+}
+
+#nice blockquote, #write blockquote{
+  margin:14px 0;
+  padding:10px 14px;
+  background:#F6FAFF;
+  border-left:4px solid var(--accent);
+  color:#0F172A;
+}
+
+#nice strong, #write strong{
+  color:var(--primary);
+}
+
+#nice ul, #nice ol, #write ul, #write ol{
+  padding-left:22px;
+}
+
+#nice li, #write li{
+  margin:6px 0;
+}
+
+/* 微信编辑器友好的表格样式 - 使用更具体的选择器 */
+#nice table{
+  width:100% !important;
+  border-collapse:collapse !important;
+  margin:14px 0 !important;
+  font-size:14px !important;
+  border:1px solid #D9E6FF !important;
+}
+
+#nice th{
+  background:#F6FAFF !important;
+  font-weight:600 !important;
+  color:#0B1430 !important;
+  border:1px solid #D9E6FF !important;
+  padding:10px 12px !important;
+  text-align:left !important;
+}
+
+#nice td{
+  border:1px solid #D9E6FF !important;
+  padding:8px 12px !important;
+  text-align:left !important;
+  background:#FFFFFF !important;
+}
+
+#nice tr:nth-child(even) td{
+  background:#FAFBFF !important;
+}
+</style>
+
+<h1>【论文速记】科研Agent，怎样从问题走到可执行工作流？</h1>
+
+<blockquote><p><strong>一句话结论：</strong>真正能进入科研生产的Agent，不只是会写代码，而是要把研究意图稳定地转成可复现、可审计、可执行的工作流。</p></blockquote>
+
+<p><img src="score_card.png" alt="评分卡" /></p>
+<p><img src="info_card.png" alt="信息卡" /></p>
+
+<h2>A. 研究问题</h2>
+<p>科学工作流系统已经能处理调度、容错、资源管理和数据staging，但"从研究问题到工作流规格"的语义转换仍然高度依赖人工。研究者需要把自然语言问题翻译成具体参数、数据文件、并行粒度和DAG，这一步既需要领域知识，也需要基础设施经验。</p>
+<p>这篇论文要解决的，是让Agent参与科研生产时最关键的一段链路：不是直接生成一段可能能跑的代码，而是把研究意图稳定地转成可复现、可审计、可执行的workflow。</p>
+
+<h2>B. 核心贡献</h2>
+<ul>
+<li><strong>三层架构</strong>：语义层（LLM提取结构化intent）、确定性层（验证过的generator产出DAG）、知识层（markdown格式的Skills存放词汇映射、参数约束、优化策略）。LLM非确定性被限制在intent extraction。</li>
+<li><strong>Skills作为专家可维护的知识载体</strong>：不是embedding或模型权重，而是纯markdown表格（如"European"→"EUR"），可版本控制、可审计、无需ML背景即可编辑。</li>
+<li><strong>端到端agentic pipeline</strong>：四个Agent（Conductor、Workflow Composer、Deployment Service、Execution Sentinel）+ human-in-the-loop验证 + deferred workflow generation。</li>
+<li><strong>Skill驱动的执行时优化</strong>：Skills不只用于语义翻译，还编码优化策略（如tabix提取vs全量下载），实现92%数据传输减少。</li>
+</ul>
+
+<h2>C. 方法/框架</h2>
+<p>核心设计是<strong>分层 + Deferred Generation</strong>。</p>
+<p><strong>语义层</strong>：LLM把自然语言问题抽取为结构化ResearchIntent（populations、chromosomes、regions等字段），必须遵循JSON schema。LLM只做intent提取，不生成workflow。</p>
+<p><strong>确定性层</strong>：验证过的generator把intent转成可执行DAG。关键设计是<strong>deferred generation</strong>——先部署基础设施、测量实际数据大小和可用vCPU，再生成最终DAG。这样并行度和资源分配基于实测而非估算。</p>
+<p><strong>知识层</strong>：Skills是markdown文档，包含：</p>
+<ul>
+<li><strong>Vocabulary tables</strong>：如26个1000 Genomes population code映射</li>
+<li><strong>Synonym tables</strong>："British"→"GBR"，"Han Chinese"→"CHB"</li>
+<li><strong>Constraint tables</strong>：哪些参数组合合法</li>
+<li><strong>Optimization tables</strong>：tabix提取50MB vs 全量943MB</li>
+</ul>
+<p>Skills被LLM（语义层）和generator（确定性层）同时咨询。</p>
+<p><strong>Human-in-the-loop</strong>：Conductor在plan阶段和execution阶段各设置一个验证gate，科学家可批准、修改或拒绝。</p>
+
+<h2>D. 关键结果</h2>
+
+<h3>1. Intent extraction accuracy（150 queries，5 tiers）</h3>
+<table>
+<tr><th>模型</th><th>无Skill</th><th>全Skill</th></tr>
+<tr><td>Claude Opus 4.6</td><td>44.0%</td><td><strong>83.3%</strong></td></tr>
+<tr><td>GPT-5.4</td><td>39.3%</td><td>80.0%</td></tr>
+<tr><td>GPT-4.1-mini</td><td>27.4%</td><td>62.0%</td></tr>
+</table>
+<ul>
+<li>T1（显式代码）和T2（同义词）有Skill后达100%</li>
+<li><strong>T3（隐性推理，如"breast cancer susceptibility"→BRCA1坐标）</strong>：Opus从10%→86.7%，但仍有局限；无Skill时全模型0-10%</li>
+<li>T4（参数不全）和T5（对抗性）仍有挑战</li>
+</ul>
+
+<h3>2. Deferred generation效果</h3>
+<table>
+<tr><th>区域</th><th>原始估计</th><th>实测后J</th><th>数据下载</th></tr>
+<tr><td>HLA</td><td>J=100</td><td>J=51</td><td>13GB→1.57GB (88%)</td></tr>
+<tr><td>BRCA1</td><td>J=100</td><td>J=1</td><td>1.3GB→23MB (98%)</td></tr>
+<tr><td>HBB</td><td>J=66</td><td>J=1</td><td>2.1GB→1.4MB (99.9%)</td></tr>
+</table>
+<ul>
+<li>整体数据传输减少<strong>92%</strong></li>
+<li>小基因区域（HBB、APOE）节省超99%</li>
+</ul>
+
+<h3>3. 端到端性能（3 queries，Kubernetes 3节点48vCPU）</h3>
+<table>
+<tr><th>Query</th><th>LLM</th><th>Provisioning</th><th>Execution</th><th>总时间</th><th>成本</th></tr>
+<tr><td>Q1 HLA+BRCA1</td><td>14.5s (0.2%)</td><td>245.7s (2.8%)</td><td>8464s (97%)</td><td>145min</td><td>$0.0007</td></tr>
+<tr><td>Q2 BRCA2+BRCA1</td><td>13.0s (2.2%)</td><td>96.0s (16%)</td><td>491s (81.8%)</td><td>10min</td><td>$0.0008</td></tr>
+<tr><td>Q3 CFTR+HBB+APOE</td><td>11.2s (0.7%)</td><td>95.2s (6.1%)</td><td>1457s (93.2%)</td><td>26min</td><td>$0.0009</td></tr>
+</table>
+<ul>
+<li>LLM开销&lt;15秒，可忽略</li>
+<li>执行时间占82-97%，系统非瓶颈</li>
+<li>所有query的intent extraction 5/5字段正确</li>
+<li>成本&lt;$0.001/query（Gemini 2.0 Flash）</li>
+</ul>
+
+<h3>4. 对比手工specification</h3>
+<p>Q3手工流程需5步、30-50分钟、涉及2类专家（领域+基础设施）。Conductor完成106秒（11s LLM + 95s基础设施），且合并了专家知识。</p>
+
+<h2>E. 产业启示</h2>
+<ul>
+<li><strong>科研Agent的护城河不在prompt而在知识库</strong>：可维护的Skills、确定性执行层、可追踪审计链，比单次代码生成更有价值。</li>
+<li><strong>"Deferred Generation"模式可泛化</strong>：先部署测量、再生成配置，适用于任何资源依赖型workflow（数据分析、风控建模、药物研发）。</li>
+<li><strong>Human-in-the-loop不是妥协而是必要</strong>：科研要求可审计，关键决策gate保留人工验证是feature不是bug。</li>
+<li><strong>Skills模式降低领域专家参与门槛</strong>：纯markdown、无需ML背景、可版本控制，让遗传学家自己维护population映射，而不是依赖ML工程师。</li>
+</ul>
+
+<h2>F. 一句话判断</h2>
+<p><strong>这篇论文真正重要的地方，是把科研Agent从"代码生成"推进到"可复现工作流生成"，并给出了一个可落地、可审计、可由领域专家维护的架构范式。</strong></p>
+
+</section>

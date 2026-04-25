@@ -1,0 +1,221 @@
+<section id="nice">
+<style>
+:root{
+  --primary:#0B1430;
+  --accent:#4CC3FF;
+  --accent-2:#2F6BFF;
+  --bg-soft:#E6F2FF;
+  --text:#1F2A37;
+  --muted:#6B7280;
+  --highlight:#FFD700;
+}
+
+#nice, #write{
+  color:var(--text);
+  font-size:16px;
+  line-height:1.8;
+}
+
+#nice h1, #write h1{
+  color:var(--primary);
+  font-size:22px;
+  font-weight:800;
+  border-left:5px solid var(--accent);
+  padding-left:12px;
+  margin:22px 0 14px;
+}
+
+#nice h2, #write h2{
+  color:var(--primary);
+  font-size:18px;
+  font-weight:700;
+  margin:18px 0 10px;
+}
+
+#nice h3, #write h3{
+  color:var(--accent-2);
+  font-size:16px;
+  font-weight:700;
+  margin:14px 0 8px;
+}
+
+#nice hr, #write hr{
+  border:0;
+  border-top:1px solid #D9E6FF;
+  margin:18px 0;
+}
+
+#nice blockquote, #write blockquote{
+  margin:14px 0;
+  padding:10px 14px;
+  background:#F6FAFF;
+  border-left:4px solid var(--accent);
+  color:#0F172A;
+}
+
+#nice .highlight-box, #write .highlight-box{
+  margin:14px 0;
+  padding:12px 16px;
+  background:linear-gradient(135deg, #E6F2FF 0%, #F0F7FF 100%);
+  border:1px solid #B8D4FF;
+  border-radius:6px;
+}
+
+#nice strong, #write strong{
+  color:var(--primary);
+}
+
+#nice .key-number, #write .key-number{
+  font-size:24px;
+  font-weight:800;
+  color:var(--accent-2);
+}
+
+#nice ul, #nice ol, #write ul, #write ol{
+  padding-left:22px;
+}
+
+#nice li, #write li{
+  margin:6px 0;
+}
+</style>
+
+<h1>【论文速记】DeepSeek V4：百万Token长上下文的技术突破与产业意义</h1>
+
+<blockquote><p><strong>一句话结论：</strong>DeepSeek V4 的核心突破是将百万Token长上下文从"技术演示"推进到"工程可部署"——通过CSA+HCA混合注意力架构，实现相比V3.2仅27%的FLOPs和10%的KV Cache，让超长上下文真正具备商业部署可行性。</p></blockquote>
+
+<p><img src="score_card.png" alt="评分卡" /></p>
+
+<p><img src="info_card.png" alt="信息卡" /></p>
+
+<h2>A. 研究问题：长上下文的技术瓶颈在哪？</h2>
+
+<p>推理模型（如DeepSeek-R1、OpenAI o系列）的崛起确立了Test-time Scaling新范式，但其根本瓶颈在于<strong>标准Attention机制的二次计算复杂度</strong>——上下文越长，计算成本呈指数级增长。</p>
+
+<p>当前行业痛点：</p>
+<ul>
+<li><strong>Agent工作流</strong>：多轮工具调用导致上下文快速膨胀</li>
+<li><strong>代码库理解</strong>：大型项目需要百万级Token上下文</li>
+<li><strong>科研文献综述</strong>：跨文档分析需要超长上下文支撑</li>
+</ul>
+
+<p>DeepSeek-V4要解决的核心问题：<strong>如何让百万Token上下文从"演示级能力"变成"可常规部署的工程能力"</strong>——不是能不能塞进去，而是成本能不能承受、效率能不能接受。</p>
+
+<h2>B. 核心贡献：效率数量级提升的技术路径</h2>
+
+<p>DeepSeek-V4发布两个MoE模型，均支持百万Token上下文：</p>
+
+<table style="width:100%;border-collapse:collapse;margin:12px 0;font-size:14px;">
+<tr style="background:#F0F7FF;">
+<th style="padding:10px;border:1px solid #D9E6FF;text-align:left;">模型</th>
+<th style="padding:10px;border:1px solid #D9E6FF;text-align:center;">总参数量</th>
+<th style="padding:10px;border:1px solid #D9E6FF;text-align:center;">激活参数量</th>
+<th style="padding:10px;border:1px solid #D9E6FF;text-align:center;">定位</th>
+</tr>
+<tr>
+<td style="padding:10px;border:1px solid #E8F0FF;"><strong>DeepSeek-V4-Pro</strong></td>
+<td style="padding:10px;border:1px solid #E8F0FF;text-align:center;">1.6T</td>
+<td style="padding:10px;border:1px solid #E8F0FF;text-align:center;">49B</td>
+<td style="padding:10px;border:1px solid #E8F0FF;">旗舰性能，最强推理</td>
+</tr>
+<tr style="background:#FAFBFC;">
+<td style="padding:10px;border:1px solid #E8F0FF;"><strong>DeepSeek-V4-Flash</strong></td>
+<td style="padding:10px;border:1px solid #E8F0FF;text-align:center;">284B</td>
+<td style="padding:10px;border:1px solid #E8F0FF;text-align:center;">13B</td>
+<td style="padding:10px;border:1px solid #E8F0FF;">极致效率，成本优先</td>
+</tr>
+</table>
+
+<h3>关键技术突破</h3>
+
+<p><strong>1. CSA + HCA 混合注意力架构（核心创新）</strong></p>
+<ul>
+<li><strong>CSA（Compressed Sparse Attention，压缩稀疏注意力）</strong>：沿序列维度压缩KV Cache，再进行稀疏注意力计算</li>
+<li><strong>HCA（Heavily Compressed Attention，重度压缩注意力）</strong>：对KV Cache进行更激进的压缩，但保持稠密注意力</li>
+<li><strong>交替使用</strong>：CSA和HCA交替组成混合注意力层，在百万Token场景下显著降低计算成本</li>
+</ul>
+
+<p><strong>2. mHC（Manifold-Constrained Hyper-Connections）</strong></p>
+<p>增强传统残差连接，将残差映射约束到特定流形，提升深层信号传播稳定性。</p>
+
+<p><strong>3. Muon优化器</strong></p>
+<p>引入Muon优化器加速收敛、提升训练稳定性。</p>
+
+<p><strong>4. 全栈工程优化</strong></p>
+<ul>
+<li><strong>训练端</strong>：FP4量化感知训练、MoE融合Kernel、上下文并行、异构KV Cache</li>
+<li><strong>推理端</strong>：On-Disk KV Cache存储、共享前缀复用</li>
+</ul>
+
+<h2>C. 关键结果：效率对比的数据说话</h2>
+
+<h3>百万Token场景下的效率突破</h3>
+
+<div class="highlight-box">
+<p><strong>DeepSeek-V4-Pro vs V3.2（1M Token上下文）</strong></p>
+<ul>
+<li>单Token推理FLOPs：<span class="key-number">27%</span>（降低3.7倍）</li>
+<li>KV Cache大小：<span class="key-number">10%</span>（降低9.8倍）</li>
+</ul>
+<p><strong>DeepSeek-V4-Flash vs V3.2（1M Token上下文）</strong></p>
+<ul>
+<li>单Token推理FLOPs：<span class="key-number">10%</span>（降低10倍）</li>
+<li>KV Cache大小：<span class="key-number">7%</span>（降低13.7倍）</li>
+</ul>
+</div>
+
+<h3>模型能力基准</h3>
+
+<p>DeepSeek-V4-Pro-Max（Pro的最大推理 effort 模式）在核心评测集上：</p>
+<ul>
+<li><strong>知识</strong>：SimpleQA、Chinese-SimpleQA显著领先开源模型，接近Gemini-3.1-Pro</li>
+<li><strong>推理</strong>：AIME、MATH等数学推理优于GPT-5.2、Gemini-3.0-Pro，略逊于GPT-5.4、Gemini-3.1-Pro</li>
+<li><strong>Agent</strong>：公开基准与Kimi-K2.6、GLM-5.1持平，内部评测超越Claude Sonnet 4.5、接近Opus 4.5</li>
+<li><strong>长上下文</strong>：百万Token场景下超越Gemini-3.1-Pro</li>
+</ul>
+
+<h2>D. 产业启示：长上下文Agent的成本拐点</h2>
+
+<p>DeepSeek-V4的效率突破，让以下场景的<strong>商业部署可行性</strong>发生质变：</p>
+
+<table style="width:100%;border-collapse:collapse;margin:12px 0;font-size:14px;">
+<tr style="background:#F0F7FF;">
+<th style="padding:10px;border:1px solid #D9E6FF;text-align:left;">应用场景</th>
+<th style="padding:10px;border:1px solid #D9E6FF;text-align:left;">V3.2时代痛点</th>
+<th style="padding:10px;border:1px solid #D9E6FF;text-align:left;">V4时代可行性</th>
+</tr>
+<tr>
+<td style="padding:10px;border:1px solid #E8F0FF;"><strong>代码库理解</strong></td>
+<td style="padding:10px;border:1px solid #E8F0FF;">大型项目上下文超长，成本不可控</td>
+<td style="padding:10px;border:1px solid #E8F0FF;">百万Token原生支持，成本降低3-10倍</td>
+</tr>
+<tr style="background:#FAFBFC;">
+<td style="padding:10px;border:1px solid #E8F0FF;"><strong>复杂Agent工作流</strong></td>
+<td style="padding:10px;border:1px solid #E8F0FF;">多轮工具调用导致上下文膨胀，推理成本高</td>
+<td style="padding:10px;border:1px solid #E8F0FF;">Flash版本10% FLOPs，长程Agent成本可控</td>
+</tr>
+<tr>
+<td style="padding:10px;border:1px solid #E8F0FF;"><strong>科研文献综述</strong></td>
+<td style="padding:10px;border:1px solid #E8F0FF;">跨文档分析需分段检索，信息损失大</td>
+<td style="padding:10px;border:1px solid #E8F0FF;">原生百万Token上下文，端到端分析</td>
+</tr>
+<tr style="background:#FAFBFC;">
+<td style="padding:10px;border:1px solid #E8F0FF;"><strong>合同/尽调文档分析</strong></td>
+<td style="padding:10px;border:1px solid #E8F0FF;">长文档需切片处理，逻辑连贯性受损</td>
+<td style="padding:10px;border:1px solid #E8F0FF;">完整上下文理解，跨条款关联分析</td>
+</tr>
+</table>
+
+<p><strong>核心洞察：</strong>DeepSeek-V4的价值不仅在于模型能力本身，而在于<strong>将长上下文从"技术亮点"转化为"可规模部署的基础设施"</strong>——这对ToB Agent、代码助手、知识管理等场景的成本结构产生根本性影响。</p>
+
+<h2>E. 一句话判断</h2>
+
+<blockquote>
+<p><strong>DeepSeek-V4的真正突破，是把百万Token长上下文从参数能力的"秀肌肉"，推进到工程效率的"真部署"——通过CSA+HCA混合注意力架构，实现3-10倍的效率提升，让超长上下文Agent首次具备商业可行的成本结构。</strong></p>
+</blockquote>
+
+<hr />
+
+<p style="font-size:13px;color:var(--muted);text-align:center;">本文基于DeepSeek-V4技术报告整理 | 评分维度：技术创新/工程化/产业影响/可复现性/性价比</p>
+
+</section>
