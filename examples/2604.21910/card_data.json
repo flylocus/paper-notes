@@ -1,0 +1,44 @@
+{
+  "paper_title": "SCI-WORKFLOW",
+  "score": {
+    "total": 8.8,
+    "dimensions": [
+      {
+        "label": "重要性 Impact",
+        "value": 1.8
+      },
+      {
+        "label": "创新性 Novelty",
+        "value": 1.7
+      },
+      {
+        "label": "可验证性 Evidence",
+        "value": 1.8
+      },
+      {
+        "label": "产业可用性 Applicability",
+        "value": 1.8
+      },
+      {
+        "label": "可复用性 Reusability",
+        "value": 1.7
+      }
+    ]
+  },
+  "info": {
+    "title": "From Research Question to Scientific Workflow: Leveraging Agentic AI for Science Automation",
+    "title_cn": "把科研问题变成可执行工作流",
+    "link": "https://arxiv.org/abs/2604.21910",
+    "authors": [
+      "Bartosz Balis",
+      "Michal Orzechowski",
+      "Piotr Kica",
+      "Michal Dygas",
+      "Michal Kuszewski"
+    ],
+    "affiliations": [
+      "AGH University of Krakow, Krakow, Poland",
+      "Sano Centre for Computational Medicine, Krakow, Poland"
+    ]
+  }
+}

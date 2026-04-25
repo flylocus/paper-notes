@@ -1,0 +1,39 @@
+{
+  "paper_title": "DEEPSEEK-V4",
+  "score": {
+    "total": 9.2,
+    "dimensions": [
+      {
+        "label": "重要性 Impact",
+        "value": 2.0
+      },
+      {
+        "label": "创新性 Novelty",
+        "value": 1.8
+      },
+      {
+        "label": "可验证性 Evidence",
+        "value": 1.7
+      },
+      {
+        "label": "产业可用性 Applicability",
+        "value": 1.9
+      },
+      {
+        "label": "可复用性 Reusability",
+        "value": 1.8
+      }
+    ]
+  },
+  "info": {
+    "title": "DeepSeek-V4: Towards Highly Efficient Million-Token Context Intelligence",
+    "title_cn": "百万 Token 上下文智能",
+    "link": "https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro/blob/main/DeepSeek_V4.pdf",
+    "authors": [
+      "DeepSeek-AI"
+    ],
+    "affiliations": [
+      "DeepSeek-AI"
+    ]
+  }
+}

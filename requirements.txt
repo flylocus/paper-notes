@@ -1,0 +1,8 @@
+# Paper Notes - Python Dependencies
+# Install with: pip install -r requirements.txt
+
+# Image processing (required for card generation)
+Pillow>=10.0.0
+
+# Note: PDF/arXiv parsing is not included in this release.
+# Users should manually fill data.json with paper information.

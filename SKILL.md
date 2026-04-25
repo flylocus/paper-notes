@@ -1,79 +1,144 @@
 ---
 name: paper-notes
-description: Generate “论文速记”内容与配套图片卡（评分卡/论文信息卡/2.35:1 封面），并提供 mdnice 正文模板与 CSS。用于论文筛选评分、公众号图文排版、固定模板复用场景。
+description: 论文速记模板化生成工具 - 提供评分卡、信息卡、封面图的自动化生成，以及正文 A-F 六段式模板。适合公众号图文排版、组会汇报材料生成。/ Template-based paper note generator - Automated score cards, info cards, cover images, and A-F article templates. Suitable for WeChat articles and presentation materials.
 ---
 
-# Paper Notes
+# Paper Notes - 论文速记模板化工具 / Paper Notes Template Generator
 
-当前唯一主目录：
+> 提供论文速记的**模板化生成能力**：自动化生成评分卡、信息卡、封面图，并提供正文 A-F 六段式模板。  
+> Provides **template-based generation** for paper notes: automated score cards, info cards, cover images, and A-F article templates.
 
-`/Users/shenfei/clawd/paper-notes`
+## 快速开始 / Quick Start
 
-旧 skill 路径：
+### 前置条件 / Prerequisites
 
-`/Users/shenfei/.openclaw/workspace/skills/paper-notes`
+- Python 3.8+
+- 依赖库 / Dependencies: `pip install -r requirements.txt`
+- 字体文件（已内置）/ Fonts (included): `SourceHanSansCN-Regular.otf` / `SourceHanSansCN-Bold.otf`
 
-现在只保留为兼容壳层，不再作为主开发目录。
+### 使用流程 / Workflow
 
-## Overview
-一套固定化的“论文速记”生产流程：评分体系 + 文章模板 + 图片卡（评分卡/信息卡/封面）+ mdnice CSS。
-
-## Workflow
-
-正式默认流程：
-- 全流程：`python3 scripts/production/daily_runner.py ...`
-- 图片重生成：`python3 scripts/production/generate_cards.py ...` + `python3 scripts/production/generate_cover.py ...`
-- 发布前检查：`python3 scripts/production/preflight_check.py --out-dir <dir> --mode publish`
-- 历史目录补齐：`python3 scripts/maintenance/backfill_output_dir.py --out-dir <dir> --run-preflight`
-- 批量标准化：`python3 scripts/maintenance/batch_standardize_outputs.py`
-- 不再升格的旧目录：写入 `ARCHIVE_ONLY.md`
-- 当前正式可用目录索引：`outputs/READY_INDEX.md`
-- 兼容说明：旧 `scripts/*.py` 路径仍可运行，但现在只作为 shim，优先使用新路径
-
-不要默认使用实验脚本（例如 `scripts/experimental/generate_all_cards.py`）替代正式图片链。
-
-1) **准备数据 JSON**（评分 + 论文信息）
-- 参考：`references/data_template.json`
-
-2) **生成图片卡**
-```bash
-python3 scripts/production/generate_cards.py --data data.json --out outputs
 ```
-输出：`outputs/score_card.png`、`outputs/info_card.png`
-
-> 推荐：按论文子目录输出，避免覆盖历史文件（例如 `outputs/2602.18456/`）。
-
-3) **生成 2.35:1 封面（可选）**
-```bash
-python3 scripts/production/generate_cover.py --help
+准备数据 → 生成图片 → 编写正文 → 完成
+Prepare Data → Generate Images → Write Article → Done
 ```
-输出：`outputs/cover_235.png`（若使用 `--out outputs/<arxiv_id>` 则会生成到子目录）
 
-4) **正文排版**
-- 模板：`references/md_template.md`
-- CSS：`references/css_main.md`
+#### 1️⃣ 准备数据 / Prepare Data
 
-## Conventions
-- 评分体系：5 维度，0–2 分/项，总分 10。
-- 公众号排版顺序：评分卡 → 信息卡 → 正文 A–F（封面可置顶）。
-- 配色：深海军蓝 #0B1430 + 冰蓝 #4CC3FF。
+复制 [`references/data_template.json`](references/data_template.json)，填入论文信息：  
+Copy [`references/data_template.json`](references/data_template.json) and fill in paper information:
 
-## Resources
-- docs/
-  - `PRODUCTION_BASELINE.md`（正式链与实验链边界）
-  - `RUNBOOK_PAPER_NOTES.md`（运行说明）
-  - `SOP_PAPER_NOTES.md`（操作流程）
-  - `MIGRATION_NOTE.md`（主目录迁移说明）
-  - `REORG_PLAN.md`（后续项目化/目录统一方案）
-- scripts/
-  - production/（正式生产链）
-  - maintenance/（治理与补齐工具）
-  - experimental/（实验脚本归档）
-  - 旧顶层入口 shim（兼容旧命令）
-- references/
-  - operations.md（操作流程）
-  - data_template.json（数据模板）
-  - md_template.md（正文模板）
-  - css_main.md（mdnice CSS）
-- assets/
-  - logo.jpg（圆形 LOGO）
+```json
+{
+  "paper_title": "论文标题 / Paper Title",
+  "score": {
+    "total": 8.5,
+    "dimensions": [
+      {"label": "重要性 Impact", "value": 1.8},
+      {"label": "创新性 Novelty", "value": 1.7},
+      {"label": "可验证性 Evidence", "value": 1.6},
+      {"label": "产业可用性 Applicability", "value": 1.7},
+      {"label": "可复用性 Reusability", "value": 1.6}
+    ]
+  },
+  "info": {
+    "title": "英文标题 / English Title",
+    "title_cn": "中文标题 / Chinese Title",
+    "link": "https://arxiv.org/abs/XXXX.XXXXX",
+    "authors": ["作者1 / Author 1", "作者2 / Author 2"],
+    "affiliations": ["机构A / Institution A", "机构B / Institution B"]
+  }
+}
+```
+
+#### 2️⃣ 生成图片 / Generate Images
+
+```bash
+# 评分卡 + 信息卡 / Score Card + Info Card
+python3 scripts/production/generate_cards.py --data data.json --out outputs/my-paper
+
+# 封面图（可选）/ Cover Image (optional)
+python3 scripts/production/generate_cover.py --data data.json --out outputs/my-paper/cover_235.png
+```
+
+**输出 / Output:**
+- `score_card.png` - 五维评分卡 / 5-Dimension Score Card
+- `info_card.png` - 论文信息卡 / Paper Info Card
+- `cover_235.png` - 2.35:1 封面 / 2.35:1 Cover
+
+#### 3️⃣ 编写正文 / Write Article
+
+参考 [`references/md_template.md`](references/md_template.md) 填写 A-F 六段式内容：  
+Refer to [`references/md_template.md`](references/md_template.md) for the A-F article structure:
+
+| 段落 / Section | 说明 / Description |
+|------|------|
+| A. 研究问题 / Research Question | 一句话说明问题 / One-sentence problem statement |
+| B. 核心贡献 / Core Contributions | 列出 2-3 个贡献点 / List 2-3 contributions |
+| C. 方法/框架 / Method/Framework | 描述技术方法 / Describe technical approach |
+| D. 关键结果 / Key Results | 指标/对比/结论 / Metrics/comparison/conclusions |
+| E. 产业启示 / Industry Implications | 对行业的启发 / Implications for industry |
+| F. 一句话判断 / Final Verdict | 站队结论 / One-sentence verdict |
+
+---
+
+## 输出样例 / Output Examples
+
+| 文件 / File | 说明 / Description | 尺寸 / Size |
+|------|------|------|
+| `score_card.png` | 五维评分卡 / 5-Dimension Score Card | 1080x720 |
+| `info_card.png` | 论文信息卡 / Paper Info Card | 1080x720 |
+| `cover_235.png` | 2.35:1 封面 / 2.35:1 Cover | 2350x1000 |
+| `note.md` | 正文 Markdown / Article in Markdown | - |
+| `article_editor_ready.html` | 公众号 HTML / WeChat Article HTML | - |
+
+查看完整样例 / View full examples: [`examples/`](examples/)
+
+---
+
+## 定制与扩展 / Customization & Extension
+
+### 修改配色方案 / Modify Color Scheme
+
+编辑 [`references/css_main.md`](references/css_main.md):
+
+```css
+:root {
+  --primary: #0B1430;   /* 深海军蓝 / Dark Navy */
+  --secondary: #4CC3FF; /* 冰蓝 / Ice Blue */
+}
+```
+
+### 调整评分维度 / Adjust Score Dimensions
+
+在 `data.json` 中修改 `score.dimensions` 数组，保持总分 10 分（每维 0-2 分）。  
+Modify `score.dimensions` array in `data.json`, keeping total score at 10 (0-2 per dimension).
+
+---
+
+## 目录结构 / Directory Structure
+
+```
+paper-notes/
+├── references/          # 模板与说明 / Templates & Docs
+├── scripts/production/  # 正式生产脚本 / Production Scripts
+├── outputs/             # 最终产物 / Final Outputs
+├── examples/            # 输出样例 / Output Examples
+├── docs/                # 完整文档 / Full Documentation
+└── assets/              # logo/字体 / Logo & Fonts
+```
+
+---
+
+## 相关资源 / Related Resources
+
+- 📖 [完整文档 / Full Documentation](docs/)
+- 🎨 [CSS 样式 / CSS Styles](references/css_main.md)
+- 📋 [数据模板 / Data Template](references/data_template.json)
+- 📝 [正文模板 / Article Template](references/md_template.md)
+
+---
+
+## 许可证 / License
+
+MIT License - 自由使用，欢迎贡献 / Free to use, contributions welcome
