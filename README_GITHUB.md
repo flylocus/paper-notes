@@ -129,3 +129,30 @@ MIT License - 自由使用，欢迎贡献 / Free to use, contributions welcome
 ## 🔗 相关项目 / Related Projects
 
 - 公众号 "AI 系统笔记" / WeChat Official Account "AI System Notes" - 每日论文速记解读 / Daily paper note interpretations
+
+---
+
+## ☕ 赞赏 / Sponsor
+
+如果这个项目对你有帮助，欢迎请我喝杯咖啡：  
+If this project helps you, consider buying me a coffee:
+
+### 微信赞赏 / WeChat Reward（国内用户）
+
+<div align="center">
+<img src="assets/wechat-reward.png" width="200" alt="微信赞赏码 / WeChat Reward QR Code" />
+<p><em>微信扫码赞赏 / Scan WeChat QR to Sponsor</em></p>
+</div>
+
+建议金额 / Suggested amounts: **¥9.9** / **¥49** / **¥199**
+
+---
+
+### PayPal（国际用户 / International Users）
+
+如果你使用 PayPal，可以通过以下链接赞助：  
+If you prefer PayPal, you can sponsor via:
+
+**[https://paypal.me/aisystemnotes](https://paypal.me/aisystemnotes)**
+
+建议金额 / Suggested amounts: **$1.99** / **$9.99** / **$49.99**
