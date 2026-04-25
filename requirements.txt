@@ -1,8 +1,11 @@
-# Paper Notes - Python Dependencies
+# Paper Notes - Python Dependencies / Python 依赖
 # Install with: pip install -r requirements.txt
 
 # Image processing (required for card generation)
+# 图像处理（生成卡片所需）
 Pillow>=10.0.0
 
 # Note: PDF/arXiv parsing is not included in this release.
 # Users should manually fill data.json with paper information.
+# 注意：此版本不包含 PDF/arXiv 解析功能。
+# 用户需要手动填写 data.json 中的论文信息。
