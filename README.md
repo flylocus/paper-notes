@@ -17,6 +17,12 @@ Score Cards · Info Cards · Cover Images · Article Templates · WeChat Formatt
 
 ## 🚀 快速开始 / Quick Start
 
+### 日常生产指南 / Daily Production Guide
+
+如果目标是复现当前每日 `paper-notes` 生产流程（候选输入、选题、评分、PDF 核验、生成发布包、preflight、发布前编辑检查），请优先阅读：
+
+[`docs/OPERATOR_GUIDE.md`](docs/OPERATOR_GUIDE.md)
+
 ### 安装依赖 / Install Dependencies
 
 ```bash
@@ -129,6 +135,59 @@ MIT License - 自由使用，欢迎贡献 / Free to use, contributions welcome
 ## 🔗 相关项目 / Related Projects
 
 - 公众号 "AI 系统笔记" / WeChat Official Account "AI System Notes" - 每日论文速记解读 / Daily paper note interpretations
+
+---
+
+## 🤖 Code Wiki & AI Integration / Code Wiki 与 AI 集成
+
+To ensure that Google's **Code Wiki** parser can accurately crawl, classify, and explain this repository, the following visual schema and data flows define the automation pipeline.
+
+### 🗺️ AI Architecture Map / 架构地图
+
+```mermaid
+graph TD
+    A[data.json - Input Data] --> B[scripts/production/generate_cards.py]
+    A --> C[scripts/production/generate_cover.py]
+    B --> D[outputs/score_card.png - 1080x720]
+    B --> E[outputs/info_card.png - 1080x720]
+    C --> F[outputs/cover_235.png - 2350x1000]
+    G[references/md_template.md] --> H[scripts/production/render_article.py]
+    I[references/css_main.md] --> H
+    H --> J[outputs/article_editor_ready.html - WeChat Rendered]
+```
+
+- **Input Validation Module**: Ingests JSON files mapping to [`references/data_template.json`](references/data_template.json).
+- **Asset Generation Module**: Uses PIL/Pillow to generate pixel-precise images (`score_card.png`, `info_card.png`, and `cover_235.png`) utilizing the custom OTF fonts embedded in `assets/`.
+- **Render Engine**: Transforms standard A-F markdown structures mapped in [`references/md_template.md`](references/md_template.md) along with custom CSS tokens in [`references/css_main.md`](references/css_main.md) to generate WeChat-formatted HTML articles.
+
+---
+
+### 🎨 Output & Visual Layout Showcase / 输出与视觉布局细节
+
+This tool output is optimized for high-impact social sharing and WeChat official account integration:
+
+#### 1. Image Specifications
+*   **五维评分卡 / Score Card (`score_card.png`)**:
+    *   **Resolution**: 1080x720px
+    *   **Design**: Radar/Dimension representation of 5 indicators: Importance (Impact), Innovation (Novelty), Verifiability (Evidence), Industry Applicability (Applicability), and Reusability (Reusability).
+*   **论文信息卡 / Info Card (`info_card.png`)**:
+    *   **Resolution**: 1080x720px
+    *   **Design**: Clean layout listing metadata (Title, Link, Authors, and Affiliations) in high-contrast styling.
+*   **公众号封面 / Cover (`cover_235.png`)**:
+    *   **Resolution**: 2350x1000px (Aspect Ratio: 2.35:1)
+    *   **Design**: Minimalist post cover with title alignment.
+
+#### 2. WeChat Official Account CSS Variables
+Articles generated via `scripts/production/render_article.py` incorporate the following vanilla CSS framework elements:
+```css
+:root {
+  --primary: #0052D9;   /* Tencent Blue */
+  --secondary: #E34D59; /* Accent Red */
+  --bg: #F7F9FC;        /* Light Grayish Blue Background */
+  --text: #333333;      /* Standard Dark Text */
+  --muted: #6B7280;     /* Muted Meta Info Text */
+}
+```
 
 ---
 
