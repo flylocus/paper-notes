@@ -81,6 +81,14 @@
 10. 如果要继续做目录级统一或单项目化，先看 `docs/REORG_PLAN.md`
 11. `publish_ready` 目录应优先放在 `outputs/ready/`，`archive_only` 目录应优先放在 `outputs/archive/`
 12. 如果仍需兼容旧路径，允许保留 symlink，但治理脚本应只统计真实目录，不重复统计兼容入口
+13. `daily_runner.py produce` 输出的是基础发布包；公众号最终稿允许在 `article_editor_ready*.html` 上进行人工编辑增强。
+14. 人工编辑增强优先遵循“数据锚定、结构拆解、场景落地”三条总原则：
+    - 标题和一句话结论优先使用真实数据锚点。
+    - 关键结果和方法机制优先转成表格或分阶段结构。
+    - 产业启示必须尽量落到具体业务场景。
+15. 任何人工增强不得突破事实边界：所有数字、对比、百分比、benchmark 名称、成本、时间、模型规格必须能追溯到 PDF、arXiv 元数据或用户提供的可信来源。
+16. 对 survey / position paper / framework paper，不强行要求“性能提升百分比”；应改用论文数量、taxonomy 层级、案例数量、benchmark 覆盖等真实锚点。
+17. 在脚本 schema 支持表格和富文本前，不把编辑强化原则设为 preflight blocking；最多作为人工 checklist 或未来 warning。
 
 ## 当前结论
 从 2026-04-20 的 `exp-compression-250420` 复盘看，系统真正需要的不是更多脚本，而是：

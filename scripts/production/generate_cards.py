@@ -62,6 +62,27 @@ def round_rect(draw, xy, r, fill, outline=None, width=1):
 
 
 def wrap_text(text, font, max_width, draw):
+    if " " in text:
+        lines = []
+        cur = ""
+        for token in text.split(" "):
+            test = token if not cur else cur + " " + token
+            if draw.textlength(test, font=font) <= max_width:
+                cur = test
+                continue
+            if cur:
+                lines.append(cur)
+                cur = token
+            else:
+                lines.extend(_wrap_chars(token, font, max_width, draw))
+                cur = ""
+        if cur:
+            lines.append(cur)
+        return lines
+    return _wrap_chars(text, font, max_width, draw)
+
+
+def _wrap_chars(text, font, max_width, draw):
     lines = []
     cur = ""
     for ch in text:

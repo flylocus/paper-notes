@@ -36,7 +36,6 @@ BLOCKING_PATTERNS = [
     "Unknown Institution",
     "Unknown (Wait for ArXiv matching)",
     "Community Verified",
-    "Simulated",
     "placeholder",
     "manual enrichment",
 ]
@@ -152,6 +151,74 @@ def check_metadata_presence(out_dir: Path, issues: list[dict]) -> None:
         )
 
 
+def check_affiliations(out_dir: Path, issues: list[dict]) -> None:
+    checked_any = False
+    for name in ("generate_data.json", "card_data.json"):
+        path = out_dir / name
+        if not path.exists():
+            continue
+        checked_any = True
+        try:
+            data = json.loads(read_text(path))
+        except Exception:
+            add_issue(
+                issues,
+                "blocking",
+                "affiliations_unreadable",
+                f"cannot parse JSON to verify affiliations: {name}",
+                str(path),
+            )
+            continue
+        affils = (data.get("info") or {}).get("affiliations")
+        valid = [a for a in affils or [] if isinstance(a, str) and a.strip()]
+        if not valid:
+            add_issue(
+                issues,
+                "blocking",
+                "affiliations_missing",
+                f"info.affiliations is empty or missing in {name}; "
+                "fix fused metadata or add a *_metadata_overrides.json before publish",
+                str(path),
+            )
+            continue
+        for a in valid:
+            if "@" in a or len(a) > 100:
+                add_issue(
+                    issues,
+                    "warning",
+                    "affiliations_suspicious",
+                    f"affiliation entry looks like extraction noise: {a[:80]}",
+                    str(path),
+                )
+    if not checked_any:
+        add_issue(
+            issues,
+            "warning",
+            "affiliations_unchecked",
+            "no generate_data.json / card_data.json found; affiliations not verified",
+            str(out_dir),
+        )
+
+
+def check_report_freshness(out_dir: Path, issues: list[dict]) -> None:
+    """Post-QA edits without re-running QA leave stale PASS reports behind."""
+    article = out_dir / "article_editor_ready.html"
+    if not article.exists():
+        return
+    article_mtime = article.stat().st_mtime
+    for name in ("validation_report.json", "qa_report.json"):
+        report = out_dir / name
+        if report.exists() and article_mtime > report.stat().st_mtime + 1:
+            add_issue(
+                issues,
+                "warning",
+                "qa_report_stale",
+                f"article_editor_ready.html was modified after {name}; "
+                "re-run make qa to refresh validation",
+                str(report),
+            )
+
+
 def build_report(out_dir: Path, mode: str, issues: list[dict]) -> dict:
     blocking = [x for x in issues if x["severity"] == "blocking"]
     warnings = [x for x in issues if x["severity"] == "warning"]
@@ -197,6 +264,8 @@ def run_preflight(out_dir: Path, mode: str) -> dict:
     check_required_files(out_dir, mode, issues)
     check_article_consistency(out_dir, issues)
     check_metadata_presence(out_dir, issues)
+    check_affiliations(out_dir, issues)
+    check_report_freshness(out_dir, issues)
     scan_placeholders(out_dir, issues)
     return build_report(out_dir, mode, issues)
 

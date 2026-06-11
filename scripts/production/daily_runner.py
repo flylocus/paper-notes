@@ -91,8 +91,11 @@ def produce(args):
 
     article_payload = os.path.join(FUSED, f"{args.paper_key}_article_payload_{args.date}.json")
     card_payload = os.path.join(FUSED, f"{args.paper_key}_card_payload_{args.date}.json")
+    evidence_ledger = os.path.join(FUSED, f"{args.paper_key}_evidence_ledger_{args.date}.json")
     shutil.copyfile(card_payload, os.path.join(args.out_dir, "card_data.json"))
     shutil.copyfile(article_payload, os.path.join(args.out_dir, "generate_data.json"))
+    if os.path.exists(evidence_ledger):
+        shutil.copyfile(evidence_ledger, os.path.join(args.out_dir, "evidence_ledger.json"))
 
     print("[Produce/3] Render article files")
     run([

@@ -1,0 +1,164 @@
+{
+  "// schema_description": "论文速记三风格 Persona 注册表 —— 基于 FinceptTerminal agent_definitions.json 模式改编",
+  "// version": "2.0.0",
+  "// date": "2026-05-30",
+  "// default_mode": "主风格+辅助技法模式（推荐）",
+
+  "personas": [
+    {
+      "id": "shenfei_self",
+      "name": "申飞本人风格",
+      "weight": 0.7,
+      "profile_file": "shenfei-style.json",
+      "used_in_segments": ["A", "B", "F"]
+    },
+    {
+      "id": "luanfanshu",
+      "name": "乱翻书风格",
+      "weight": 0.2,
+      "profile_file": "luanfanshu-style.json",
+      "used_in_segments": ["C", "D"]
+    },
+    {
+      "id": "chief_digital_officer",
+      "name": "首席数智官风格",
+      "weight": 0.1,
+      "profile_file": "chief-digital-officer-style.json",
+      "used_in_segments": ["E"]
+    }
+  ],
+
+  "fusion_matrix": {
+    "description": "主风格+辅助技法模式（V2 推荐）",
+
+    "A": {
+      "primary_persona": "shenfei_self",
+      "assist_techniques_from": ["wander_publishing", "42-chapter"],
+      "transition_strategy": "用疑问句收尾，自然引出B段"
+    },
+    "B": {
+      "primary_persona": "shenfei_self",
+      "assist_techniques_from": ["42-chapter"],
+      "transition_strategy": "用破折号收束，平滑转入C段叙事"
+    },
+    "C": {
+      "primary_persona": "luanfanshu",
+      "assist_techniques_from": ["extra_large", "chief_digital_officer"],
+      "transition_strategy": "每个故事后用短句小结，保持节奏"
+    },
+    "D": {
+      "primary_persona": "luanfanshu",
+      "assist_techniques_from": ["chief_digital_officer"],
+      "transition_strategy": "用'说白了'过渡到E段"
+    },
+    "E": {
+      "primary_persona": "chief_digital_officer",
+      "assist_techniques_from": ["wander_publishing", "42-chapter"],
+      "transition_strategy": "用反问句收尾，引出F段"
+    },
+    "F": {
+      "primary_persona": "shenfei_self",
+      "assist_techniques_from": ["42-chapter"],
+      "transition_strategy": "用行动指令作结"
+    }
+  },
+
+  "assist_technique_sources": [
+    {
+      "id": "wander_publishing",
+      "name": "晚点LatePost技法",
+      "techniques": ["标签前置", "长短句交错"],
+      "weight_in_fusion": 0.15
+    },
+    {
+      "id": "42-chapter",
+      "name": "42章经技法",
+      "techniques": ["数字具体化", "括号补充", "设问与对比", "星号强调", "个人感受直白化", "感悟式收尾"],
+      "weight_in_fusion": 0.15
+    },
+    {
+      "id": "extra_large",
+      "name": "特大号技法",
+      "techniques": ["极短句", "括号吐槽"],
+      "weight_in_fusion": 0.1
+    }
+  ],
+
+  "quality_gates": {
+    "pre_delivery_checklist": [
+      {
+        "check": "自我标注前缀",
+        "command": "grep -E '(判断先行：|价值判断：|核心洞察：)' article_editor_ready.html",
+        "expected": "无输出",
+        "severity": "P0"
+      },
+      {
+        "check": "对称句式次数",
+        "command": "grep -c '不是.*而是' article_editor_ready.html",
+        "expected": "≤ 3",
+        "severity": "P1"
+      },
+      {
+        "check": "副词型空话",
+        "command": "grep -E '(系统性地|有效地|重要地)' article_editor_ready.html",
+        "expected": "无输出",
+        "severity": "P1"
+      },
+      {
+        "check": "碎句存在性",
+        "description": "人工确认有独立短句（'问题出在哪？''结果挺清楚的。'）",
+        "severity": "P1"
+      },
+      {
+        "check": "过度口语化",
+        "description": "无'兄弟''裸奔''有点东西'等",
+        "severity": "P1"
+      },
+      {
+        "check": "F段有'不过'限制面",
+        "description": "F段不全是正面总结",
+        "severity": "P0"
+      },
+      {
+        "check": "术语说明列表",
+        "description": "A段前有术语说明，覆盖5类概念",
+        "severity": "P2"
+      }
+    ],
+    "grade_criteria": [
+      {"grade": "A",  "min_score": 9.0, "p0_max": 0, "p1_max": 0, "p2_max": 2},
+      {"grade": "A-", "min_score": 8.0, "p0_max": 0, "p1_max": 0, "p2_max": 4},
+      {"grade": "B+", "min_score": 7.0, "p0_max": 2, "p1_max": 2, "p2_max": 4},
+      {"grade": "B",  "min_score": 6.0, "p0_max": 999, "p1_max": 999, "p2_max": 999}
+    ]
+  },
+
+  "production_workflow": {
+    "parallel_delegation": {
+      "description": "6段落分为3组并行委托给 leaf agent",
+      "task_groups": [
+        {
+          "group_id": 1,
+          "segments": ["A", "B", "F"],
+          "persona": "shenfei_self",
+          "assist_techniques": ["wander_publishing", "42-chapter"],
+          "leaf_instruction_template": "你是一位擅长「申飞本人」风格的科技评论员。请重写论文的 A/B/F 段。\n\n核心要求：\n1. A段：用'不会有人真以为...'开头，做 A/B 对比，用'本质上'收束\n2. B段：用破折号引出核心价值，每条贡献回答'为什么值'\n3. F段：列出 3-4 条限制面，用'不过'引导最终判断\n\nAnti-AI-tone 强制要求：无自我标注前缀、'不是...而是...'出现 ≤1 次、禁用'兄弟''裸奔'、有碎句插入。"
+        },
+        {
+          "group_id": 2,
+          "segments": ["C", "D"],
+          "persona": "luanfanshu",
+          "assist_techniques": ["extra_large", "chief_digital_officer"],
+          "leaf_instruction_template": "你是一位擅长「乱翻书」风格的科技写作者。请重写论文的 C/D 段。\n\n核心要求：\n1. C段：用'先从三个故事聊起'结构展开方法\n2. D段：用'数字不会说谎，但会掩盖真相'开头\n3. 评述交替：一个事实接一个观点\n\nAnti-AI-tone 强制：无自我标注前缀、对称句式 ≤1 次、有碎句。"
+        },
+        {
+          "group_id": 3,
+          "segments": ["E"],
+          "persona": "chief_digital_officer",
+          "assist_techniques": ["wander_publishing", "42-chapter"],
+          "leaf_instruction_template": "你是一位「首席数智官」视角的产业分析专家。请重写论文的 E 段。\n\n核心要求：\n1. 01/02/03 分层结构\n2. 每条启示有行业观察或飞哥视角\n3. 最后一条以'对做 X 的团队来说，这意味着...不是可选项，是必选项'结尾\n\nAnti-AI-tone 强制：无'综上所述''总结如下'等套路开头。"
+        }
+      ]
+    }
+  }
+}

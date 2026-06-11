@@ -59,11 +59,67 @@ def extract_first_page_text(pdf_path: str):
 def parse_affiliations_from_first_page(text: str):
     lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
     affils = []
+    affiliation_markers = [
+        "University",
+        "Institute",
+        "Researcher",
+        "Laboratory",
+        "College",
+        "Telecommunications",
+        "Hong Kong",
+        "China",
+        "Google",
+        "DeepMind",
+    ]
     for ln in lines:
-        if any(k in ln for k in ["University", "Institute", "Researcher", "Laboratory", "College", "Telecommunications", "Hong Kong", "China"]):
+        if "©" in ln or "rights reserved" in ln.lower():
+            continue
+        if any(k in ln for k in affiliation_markers):
             if ln not in affils:
                 affils.append(ln)
     return affils[:12]
+
+
+def overrides_path_for(out_path: str) -> str:
+    return os.path.splitext(out_path)[0] + "_overrides.json"
+
+
+def load_json_if_exists(path: str):
+    if not os.path.exists(path):
+        return None
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return None
+
+
+def apply_affiliation_protection(meta: dict, out_path: str) -> dict:
+    """Manual corrections must survive produce re-runs.
+
+    Priority: overrides file > previous non-empty value (when new extraction
+    is empty) > fresh PDF extraction.
+    """
+    overrides = load_json_if_exists(overrides_path_for(out_path)) or {}
+    previous = load_json_if_exists(out_path) or {}
+
+    applied_keys = []
+    for key, value in overrides.items():
+        meta[key] = value
+        applied_keys.append(key)
+    if applied_keys:
+        meta["override_applied_keys"] = applied_keys
+
+    if "affiliations" in overrides and overrides["affiliations"]:
+        meta["affiliations_source"] = "override"
+    elif not meta.get("affiliations") and previous.get("affiliations"):
+        meta["affiliations"] = previous["affiliations"]
+        meta["affiliations_source"] = "preserved_previous"
+    elif meta.get("affiliations"):
+        meta["affiliations_source"] = "pdf_extraction"
+    else:
+        meta["affiliations_source"] = "empty"
+    return meta
 
 
 def main():
@@ -94,6 +150,8 @@ def main():
             meta["affiliations"] = []
             meta["pdf_error"] = str(e)
 
+    meta = apply_affiliation_protection(meta, args.out)
+
     os.makedirs(os.path.dirname(args.out), exist_ok=True)
     with open(args.out, "w", encoding="utf-8") as f:
         json.dump(meta, f, ensure_ascii=False, indent=2)
@@ -104,6 +162,7 @@ def main():
         "title": meta["title"],
         "authors": len(meta["authors"]),
         "affiliations": len(meta.get("affiliations", [])),
+        "affiliations_source": meta.get("affiliations_source", ""),
         "pdf_first_page_extracted": meta.get("pdf_first_page_extracted", False)
     }, ensure_ascii=False))
 

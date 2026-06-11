@@ -1,0 +1,145 @@
+{
+  "// schema_description": "论文速记 Router —— 基于 PilotDeck Token Saver + EdgeClaw 纯 LLM route decision 模式改编",
+  "// design_reference": "PilotDeck: classifyAndRoute() + generateJudgePrompt() + sticky session；EdgeClaw: decideFileMemoryRoute() 纯 LLM 路由决策（不用 embedding）",
+  "// version": "1.0.0",
+  "// date": "2026-05-30",
+
+  "router": {
+    "enabled": true,
+
+    "judge": {
+      "description": "Judge 模型负责对输入论文进行 tier 分类。用当前主模型即可（不单独配轻量模型），temperature=0 确保稳定",
+      "temperature": 0,
+      "max_output_tokens": 256,
+      "timeout_ms": 5000,
+      "retry": {
+        "max_attempts": 3,
+        "base_delay_ms": 1000
+      }
+    },
+
+    "default_tier": "standard",
+
+    "tiers": {
+      "quick": {
+        "description": "短评论/工具发布/简单新闻。无需完整六段结构，单段直接写",
+        "trigger_examples": ["工具发布", "测评短评", "新闻速递", "一句话点评"],
+        "persona_strategy": {
+          "mode": "single",
+          "primary_persona": "shenfei_self",
+          "weight": 1.0,
+          "delegate": false
+        },
+        "output_schema_override": "简化版：A段+单条B段+F段（选），不强制表格和术语说明",
+        "quality_gate": "validate_output.py --skip-checks d_section_needs_table,glossary_exists"
+      },
+
+      "standard": {
+        "description": "标准论文速记。六段结构 + 三风格融合，单 pass 完成",
+        "trigger_examples": ["标准论文速记", "单篇论文解读", "中等复杂度论文"],
+        "persona_strategy": {
+          "mode": "fusion",
+          "personas": ["shenfei_self", "luanfanshu", "chief_digital_officer"],
+          "delegate": false,
+          "fusion_method": "主风格+辅助技法模式（V2）"
+        },
+        "output_schema_override": "标准六段 ABCDEF，详见 paper-note-agent-schema.json",
+        "quality_gate": "validate_output.py --full"
+      },
+
+      "persona_drive": {
+        "description": "高分/复杂论文。需要 Persona 驱动并行改写以获得更高品质",
+        "trigger_examples": [
+          "分数≥8.0的论文", "涉及多benchmark对比", "多实验/多公式论文",
+          "用户要求'再润色'或'提升到A级'",
+          "涉及多个模型家族横向比较"
+        ],
+        "persona_strategy": {
+          "mode": "parallel_delegation",
+          "personas": ["shenfei_self", "luanfanshu", "chief_digital_officer"],
+          "delegate": true,
+          "task_groups": [
+            {
+              "segments": ["A", "B", "F"],
+              "persona": "shenfei_self",
+              "assist_techniques": ["wander_publishing", "42-chapter"]
+            },
+            {
+              "segments": ["C", "D"],
+              "persona": "luanfanshu",
+              "assist_techniques": ["extra_large", "chief_digital_officer"]
+            },
+            {
+              "segments": ["E"],
+              "persona": "chief_digital_officer",
+              "assist_techniques": ["wander_publishing", "42-chapter"]
+            }
+          ]
+        },
+        "post_assembly": {
+          "required": true,
+          "steps": [
+            "HTML 拼装",
+            "validate_output.py 验证",
+            "调整段落顺序（必须 A→B→C→D→E→F）",
+            "Agent 自我反思追加"
+          ]
+        }
+      },
+
+      "survey": {
+        "description": "跨论文综述/横向比较。多篇论文并行处理，需要编排",
+        "trigger_examples": [
+          "多篇论文对比", "技术综述", "趋势分析",
+          "跨模型/跨框架横向比较"
+        ],
+        "persona_strategy": {
+          "mode": "parallel_delegation",
+          "personas": ["shenfei_self", "chief_digital_officer"],
+          "delegate": true,
+          "task_groups": [
+            {
+              "segments": ["A", "B", "F"],
+              "persona": "shenfei_self",
+              "assist_techniques": ["42-chapter"]
+            },
+            {
+              "segments": ["E"],
+              "persona": "chief_digital_officer",
+              "assist_techniques": ["wander_publishing"]
+            }
+          ]
+        },
+        "note": "C/D 段按实际情况动态决定——可能每篇论文单独一段，也可能合并对比",
+        "post_assembly": {
+          "required": true,
+          "steps": [
+            "多篇数据交叉验证（确保无张冠李戴）",
+            "HTML 拼装",
+            "validate_output.py 验证",
+            "Agent 自我反思追加"
+          ]
+        }
+      }
+    },
+
+    "sticky": {
+      "description": "同一篇论文的写作会话内保持 tier 粘性，避免每次交互重新分类",
+      "enabled": true,
+      "scope": "session"
+    },
+
+    "fallback": {
+      "description": "Judge 返回无效 tier 时的降级策略",
+      "strategy": "fallback_to_default",
+      "default_fallback": "standard"
+    },
+
+    "rules": [
+      "persona_drive 仅用于需要并行提升品质的场景——已通过 validate_output.py 验证的稿子不需要再走",
+      "quick 模式跳过术语说明和 D 段表格，减少不必要的长篇输出",
+      "survey 模式启用时优先执行多篇论文的数据交叉验证，防止张冠李戴",
+      "sticky 在 agent 自我反思完成时自动失效，下次的论文走新分类"
+    ]
+  }
+}
