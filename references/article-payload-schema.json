@@ -1,0 +1,71 @@
+{
+  "// description": "paper-notes generate_data.json (article payload) 正式 schema — 2026-06-11 起 payload 为权威编辑入口",
+  "// validator": "scripts/tools/validate_structured_output.py 轻量 JSON Schema 子集",
+  "// consumers": "render_article.py(渲染 note.md + HTML)、generate_cards.py(卡片)、validate_output.py(payload_schema 检查项)",
+  "type": "object",
+  "required": [
+    "paper_title",
+    "score",
+    "info",
+    "A_research_problem",
+    "B_core_contributions",
+    "C_method_framework",
+    "D_key_results",
+    "E_industry_implications",
+    "F_one_line_judgement"
+  ],
+  "properties": {
+    "paper_title": {"type": "string"},
+    "score": {
+      "type": "object",
+      "required": ["total", "dimensions"],
+      "properties": {
+        "total": {"type": "number"},
+        "dimensions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "label": {"type": "string", "required": true},
+              "value": {"type": "number", "required": true}
+            }
+          }
+        }
+      }
+    },
+    "info": {
+      "type": "object",
+      "required": ["title", "title_cn", "link", "authors", "affiliations"],
+      "properties": {
+        "title": {"type": "string"},
+        "title_cn": {"type": "string"},
+        "link": {"type": "string"},
+        "authors": {"type": "array", "items": {"type": "string"}},
+        "affiliations": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "A_research_problem": {"type": "string"},
+    "B_core_contributions": {"type": "array"},
+    "C_method_framework": {"type": "string"},
+    "D_key_results": {"type": "array"},
+    "E_industry_implications": {"type": "array"},
+    "F_one_line_judgement": {"type": "string"},
+    "glossary": {"type": "array"},
+    "method_subsections": {"type": "array"},
+    "result_table": {
+      "type": "object",
+      "properties": {
+        "columns": {"type": "array", "required": true},
+        "rows": {"type": "array", "required": true}
+      }
+    },
+    "source_notes": {"type": "array"},
+    "so_what": {"type": "string"},
+    "feige_view": {"type": "string"},
+    "limitations": {"type": "array"},
+    "score_rationale": {"type": "string"},
+    "score_rationale_detail": {"type": "object"},
+    "evidence_ledger": {"type": "object"},
+    "discussion_notes": {"type": "array"}
+  }
+}

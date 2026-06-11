@@ -1,7 +1,7 @@
 DATE ?= $(shell date +%Y%m%d)
 MODE ?= publish
 
-.PHONY: help phase1 standardize preflight qa backfill backfill-evidence
+.PHONY: help phase1 standardize preflight qa backfill backfill-evidence theme-index
 
 help:
 	@echo "paper-notes commands"
@@ -11,6 +11,7 @@ help:
 	@echo "  make qa OUT_DIR=/abs/path MODE=publish"
 	@echo "  make backfill OUT_DIR=/abs/path"
 	@echo "  make backfill-evidence DATE_FROM=YYYYMMDD DATE_TO=YYYYMMDD"
+	@echo "  make theme-index MONTH=YYYYMM"
 
 phase1:
 	python3 scripts/production/daily_runner.py phase1 --date $(DATE)
@@ -35,3 +36,7 @@ backfill-evidence:
 
 standardize-legacy:
 	python3 scripts/maintenance/standardize_legacy_outputs.py --date-from "$(DATE_FROM)" --date-to "$(DATE_TO)" --run-qa
+
+theme-index:
+	@if [ -z "$(MONTH)" ]; then echo "MONTH is required (YYYYMM)"; exit 1; fi
+	python3 scripts/maintenance/build_theme_index.py --month "$(MONTH)"

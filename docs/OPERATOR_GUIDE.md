@@ -508,6 +508,9 @@ warning: 0
 - `standardize-legacy` 只插入带 `data-standardized="20260606"` 标记的结构块，并保存 `article_editor_ready.legacy_pre_standardize.html` 备份；它不负责重写旧正文里的对称句式、表格缺失或副词空话。
 - 若旧产物缺 `fused/<id>_score.json`，`backfill-evidence` 可从 `generate_data.json` 里的既有 `score` 降级生成 ledger，并在 `source_basis` 中记录 fallback；这只用于历史补账，不替代正式评分文件。
 - 当前 QA 失败条件是 preflight blocking 或 validation P0；P1/P2 作为发布前编辑提醒处理。
+- **payload schema（2026-06-11 起）**：`generate_data.json` 必须符合 `references/article-payload-schema.json`（validation 检查项 `payload_schema`，P1）。结构化富段落字段（`glossary` / `method_subsections` / `result_table` / `source_notes` / `so_what` / `feige_view` / `limitations`）以 payload 为权威编辑入口——内容修改优先改 payload 再用 `render_article.py` 重渲染 note.md 和 HTML，而不是分别手改三件套。
+- **claim→evidence 映射（2026-06-12 起，观察期 P2）**：新产出的 `evidence_ledger.json` 应在 `claim_evidence` 数组中为强判断（D 段结论、F 段判断）登记映射，每条至少含 `claim` + `evidence` 引文或 `location`（如 `Table 4` / `Section 10.8`）。检查项 `claim_evidence_coverage`，观察 2-3 天后视生产负担决定是否升 P1。
+- **月度主题索引**：`make theme-index MONTH=YYYYMM` 生成 `outputs/THEME_INDEX_<YYYYMM>.md`（主题分布 + 每篇一句话判断），供月度复盘使用。
 
 ---
 

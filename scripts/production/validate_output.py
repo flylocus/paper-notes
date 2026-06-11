@@ -189,6 +189,37 @@ def _has_score_rationale_detail(data: dict | None) -> bool:
 
 # ── Registered Checks ──────────────────────────────────────────────────────
 
+_PAYLOAD_SCHEMA_PATH = Path(__file__).resolve().parents[2] / "references" / "article-payload-schema.json"
+_LITE_VALIDATOR_PATH = Path(__file__).resolve().parents[1] / "tools" / "validate_structured_output.py"
+
+
+def _validate_payload_against_schema(data: dict) -> list[str]:
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("lite_validator", _LITE_VALIDATOR_PATH)
+    lite = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(lite)
+    schema = json.loads(_PAYLOAD_SCHEMA_PATH.read_text(encoding="utf-8"))
+    return lite.validate_value(data, schema, "$")
+
+
+@register_check("payload_schema", "P1",
+                "generate_data.json 必须符合 article-payload-schema")
+def check_payload_schema(_html: str | None, data: dict | None) -> str | None:
+    if data is None:
+        return "未找到可解析的 payload（generate_data.json / card_data.json）"
+    if not _PAYLOAD_SCHEMA_PATH.exists() or not _LITE_VALIDATOR_PATH.exists():
+        return None  # schema 基建缺失时不拦发布，由仓库完整性保证
+    try:
+        errors = _validate_payload_against_schema(data)
+    except Exception as e:
+        return f"schema 校验器异常: {e}"
+    if errors:
+        head = "; ".join(errors[:4])
+        more = f"（共 {len(errors)} 处）" if len(errors) > 4 else ""
+        return f"payload 不符合 schema: {head}{more}"
+    return None
+
+
 @register_check("f_section_requires_不过", "P0",
                 "F段必须有转折词（不过/但/然而）引导的限制面/负面判断")
 def check_f_section_requires_不过(html: str | None, _data: dict | None) -> str | None:
@@ -403,6 +434,31 @@ def check_evidence_source_recorded(_html: str | None, data: dict | None) -> str 
     return None
 
 
+@register_check("claim_evidence_coverage", "P2",
+                "evidence_ledger 应包含 claim→evidence 映射（2026-06-12 起生效，观察期 P2）")
+def check_claim_evidence_coverage(_html: str | None, data: dict | None) -> str | None:
+    if data is None:
+        return None
+    out_dir_value = data.get("_out_dir")
+    if not out_dir_value:
+        return None
+    date_match = re.search(r"/(\d{8})/", str(out_dir_value) + "/")
+    if not date_match or date_match.group(1) < "20260612":
+        return None  # 历史产出不追溯
+    ledger = _read_evidence_ledger(Path(out_dir_value)) or data.get("evidence_ledger")
+    if not isinstance(ledger, dict):
+        return None  # ledger 缺失由 evidence_source_recorded 负责
+    entries = ledger.get("claim_evidence")
+    if not isinstance(entries, list) or not entries:
+        return "claim_evidence 为空：强判断（D 段结论/F 段判断）应至少各有一条 claim→evidence 映射"
+    for i, e in enumerate(entries):
+        if not isinstance(e, dict) or not str(e.get("claim", "")).strip():
+            return f"claim_evidence[{i}] 缺少 claim 文本"
+        if not (str(e.get("evidence", "")).strip() or str(e.get("location", "")).strip()):
+            return f"claim_evidence[{i}] 缺少 evidence 引文或 location（如 Table 4 / Section 10.8）"
+    return None
+
+
 @register_check("so_what_mechanism_judgement", "P2",
                 "D段So What应包含headline之外的机制判断")
 def check_so_what_mechanism_judgement(html: str | None, _data: dict | None) -> str | None:
@@ -478,7 +534,10 @@ def run_validation(out_dir: Path, grade_criteria: list[dict]) -> dict:
 
     issues = []
     for check_fn in CHECKS_REGISTRY:
-        result = check_fn(html, data)
+        try:
+            result = check_fn(html, data)
+        except Exception as e:
+            result = f"检查器异常（输入数据形态非法）: {type(e).__name__}: {e}"
         if result is not None:
             issues.append({
                 "check_id": check_fn.check_id,
