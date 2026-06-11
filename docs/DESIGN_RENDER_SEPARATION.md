@@ -62,7 +62,8 @@ generate_data.json(唯一编辑面,schema 门控)
 | 风险 | 对策 |
 |---|---|
 | 表达力补全后仍有想不到的排版需求 | 不开 raw-html 逃生门;新需求按"先加 schema 字段+renderer 支持"处理,宁可慢一天 |
-| 编辑改 payload 比改 HTML 慢,生产负担上升 | Phase 3 试点期实测负担;不达标就停在 Phase 2(门控仍有价值) |
+| AI 编辑器改 payload 的可靠性 | 发布级强化由 AI 按格式规范执行(2026-06-11 飞哥确认),强化动作与 payload 字段一一对应,比 HTML 直改更不易碰坏样式;约定用 Python json 读改写、禁止 shell 拼接 JSON(中文引号坑,见 clawd MEMORY 生产 Pitfall) |
+| 迁移期 skill 指令不一致 | 一次性翻转 `~/.hermes/skills/content-strategy/paper-notes-*` 与 OPERATOR_GUIDE 第 13 节的编辑指令("改 HTML 后同步 payload" → "只改 payload → make render → make qa");Phase 3 试点前完成 |
 | 重渲染覆盖历史手工稿 | `make render` 仅对显式 OUT_DIR 执行,且先备份原 HTML(`.legacy_pre_render.html`);历史产出永不批量重渲染 |
 | 与 claim_evidence 观察期互相干扰 | 无耦合;但 Phase 3 试点日避开 claim_evidence 升级决策日(6/14) |
 
@@ -70,4 +71,4 @@ generate_data.json(唯一编辑面,schema 门控)
 
 - 分支:`feat/render-separation`(基线原则:真正调整时开新分支)
 - 建议节奏:6/12-6/14 先跑 claim_evidence 观察期 → 6/15 起 Phase 1/2 → 6/16-6/17 Phase 3 试点
-- 决策点:Phase 3 切换前需飞哥确认编辑负担可接受
+- Phase 3 验收(2026-06-11 更新):AI 以 payload-first 流程完成发布级强化,轮次/耗时不劣于现状、QA 通过率不降、similarity ≥ 0.98;达标即切换,无需额外人工决策点
