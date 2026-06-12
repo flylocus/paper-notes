@@ -589,10 +589,19 @@ ABCDEF 小标题样式偏好：
 
 ## 14. 发布后收口
 
+**约定（2026-06-12 起）**：发布信息由飞哥固定发给 **Codex**（当日生产 task card 的 owner），格式带发布链接：
+
+```text
+已发布 <arxiv_id> https://mp.weixin.qq.com/s/xxxx
+```
+
+Codex 收到后执行收口三件事：READY_INDEX 确认、task card 标记 published 并回填发布链接、daily memory 记录发布链接。收口动作全部是文件操作，飞哥正在对话的其他 Agent 可代办，但默认 owner 是 Codex。
+
 用户确认发布后，记录：
 
 ```text
 最终发布文件：outputs/ready/YYYYMMDD/<arxiv_id>/article_editor_ready.html
+发布链接：https://mp.weixin.qq.com/s/xxxx
 是否有人工修改：有/无
 ```
 
