@@ -204,6 +204,122 @@ def render_info_card(data, out_path):
     img.save(out_path)
 
 
+def render_combined_card(data, out_path):
+    """论文信息 + 评分卡 手机竖版 Banner (600 × 580)
+
+    设计原则：Header Card 只是身份Banner，不是全文摘要。
+    - 目标：用户在微信里扫一眼就知道「这是哪篇？打了多少分？
+    - 不重复：作者/机构/链接在正文顶部，不重复占位
+    - 无风险：两列布局，16px字体，保证窄屏不重叠
+
+    详细设计规范见：docs/HEADER_CARD_DESIGN.md
+    """
+    CARD_W, CARD_H = 600, 580  # 高度减半，紧贴内容
+    img = Image.new("RGB", (CARD_W, CARD_H), PRIMARY)
+    draw = ImageDraw.Draw(img)
+
+    # 渐变背景
+    cx, cy = CARD_W * 0.5, CARD_H * 0.3
+    max_r = math.hypot(CARD_W, CARD_H)
+    for r in range(int(max_r), 0, -12):
+        t = r / max_r
+        color = _blend("#10265F", PRIMARY, t)
+        draw.ellipse([cx - r, cy - r, cx + r, cy + r], fill=color)
+
+    PADDING = 50
+    RIGHT_MARGIN = CARD_W - PADDING
+
+    # 字体
+    title_font = load_font(FONT_BOLD, 26)
+    score_font = load_font(FONT_BOLD, 70)
+    dim_label_font = load_font(FONT_REG, 16)
+    dim_value_font = load_font(FONT_BOLD, 16)
+
+    y = PADDING + 30
+
+    # ===== LOGO 居中 =====
+    if os.path.exists(LOGO_PATH):
+        logo = Image.open(LOGO_PATH).convert("RGBA")
+        max_w = 80
+        scale = max_w / logo.width
+        new_w = int(logo.width * scale)
+        new_h = int(logo.height * scale)
+        logo = logo.resize((new_w, new_h), Image.LANCZOS)
+        mask = Image.new("L", (new_w, new_h), 0)
+        mdraw = ImageDraw.Draw(mask)
+        mdraw.ellipse((0, 0, new_w, new_h), fill=255)
+        logo_x = (CARD_W - new_w) // 2
+        img.paste(logo, (logo_x, y), mask)
+        y += new_h + 30
+
+    # ===== 一行标题：中文 + 英文缩写 =====
+    title_text = "科学仪器 Agent 基准：LabOSBench"
+    title_w = draw.textlength(title_text, font=title_font)
+    draw.text(((CARD_W - title_w) // 2, y), title_text, fill=ACCENT, font=title_font)
+    y += 55
+
+    # ===== 分割线 1 =====
+    draw.rectangle([PADDING, y, RIGHT_MARGIN, y + 2], fill=ACCENT2)
+    y += 35
+
+    # ===== 5维度评分：两列（左3右2），标签分数间留安全距离 =====
+    dims = data["score"]["dimensions"]
+    col_w = (RIGHT_MARGIN - PADDING) // 2 - 20  # 列宽减小，留更多间距
+    value_gap = 40  # 标签和分数之间最少留 40px 安全距离
+
+    for i, d in enumerate(dims):
+        col = i % 2  # 0=左列, 1=右列
+        row = i // 2
+        xx = PADDING if col == 0 else PADDING + col_w + 40  # 列间距加大
+        yy = y + row * 38
+
+        label = d["label"]
+        value = f"{d['value']}/2"
+
+        # 左列：标签最大宽度留足给分数
+        if col == 0:
+            label_max_w = col_w - value_gap
+            label_w = draw.textlength(label, font=dim_label_font)
+            if label_w > label_max_w:
+                # 超长时只显示中文部分
+                label_short = label.split(" ")[0]
+                draw.text((xx, yy), label_short, fill=TEXT, font=dim_label_font)
+            else:
+                draw.text((xx, yy), label, fill=TEXT, font=dim_label_font)
+            w = draw.textlength(value, font=dim_value_font)
+            draw.text((PADDING + col_w - w, yy), value, fill=ACCENT, font=dim_value_font)
+        # 右列：标签最大宽度留足给分数
+        else:
+            label_max_w = col_w - value_gap
+            label_w = draw.textlength(label, font=dim_label_font)
+            if label_w > label_max_w:
+                # 超长时只显示中文部分
+                label_short = label.split(" ")[0]
+                draw.text((xx, yy), label_short, fill=TEXT, font=dim_label_font)
+            else:
+                draw.text((xx, yy), label, fill=TEXT, font=dim_label_font)
+            w = draw.textlength(value, font=dim_value_font)
+            draw.text((RIGHT_MARGIN - w, yy), value, fill=ACCENT, font=dim_value_font)
+
+    y += 3 * 38 + 15  # 3行高度
+
+    # ===== 分割线 2 =====
+    draw.rectangle([PADDING, y, RIGHT_MARGIN, y + 2], fill=ACCENT2)
+    y += 25  # 减小间距
+
+    # ===== 总分：居中放大，与底部条拉开安全距离 =====
+    total = data["score"]["total"]
+    total_text = f"{total:.1f} / 10"
+    total_w = draw.textlength(total_text, font=score_font)
+    draw.text(((CARD_W - total_w) // 2, y), total_text, fill=ACCENT, font=score_font)
+    y += 95  # 总分高度 + 底部间距
+
+    # ===== 底部条在总分下方，不重叠 =====
+    draw.rectangle([PADDING, y, RIGHT_MARGIN, y + 3], fill=ACCENT)
+
+    img.save(out_path)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--data", help="JSON data file")
@@ -237,6 +353,7 @@ def main():
     os.makedirs(args.out, exist_ok=True)
     render_score_card(data, os.path.join(args.out, "score_card.png"))
     render_info_card(data, os.path.join(args.out, "info_card.png"))
+    render_combined_card(data, os.path.join(args.out, "header_card.png"))
     print("OK", args.out)
 
 

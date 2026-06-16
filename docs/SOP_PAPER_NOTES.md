@@ -158,20 +158,27 @@
 它们属于实验脚本，不属于正式发布基线。
 
 生成：
-- `score_card.png`
-- `info_card.png`
+- `header_card.png` ⭐ **（默认产物，v2.0 起）**
+  - 600 × 585 竖版 Banner
+  - 包含：Logo + 一行标题 + 两列评分 + 总分
+  - 不包含作者/机构/链接（正文顶部已有）
+- `score_card.png` （deprecated，保留向后兼容）
+- `info_card.png` （deprecated，保留向后兼容）
 - `cover_235.png`
+
+详细设计规范见：[HEADER_CARD_DESIGN.md](./HEADER_CARD_DESIGN.md)
 
 ### 5.2 生成正文
 至少输出两份：
 1. `note.md`
-2. `article_editor_ready.html`
+2. `article_wechat_safe.html` ⭐ **（公众号发布用，内联样式，无 class）**
+3. `article_editor_ready.html`（deprecated）
 
 ### 5.3 正文结构要求
 按固定结构：
 - 标题
 - 一句话结论
-- score/info 图片
+- `header_card.png`（360px 宽居中显示）
 - A. 研究问题
 - B. 核心贡献
 - C. 方法/框架
