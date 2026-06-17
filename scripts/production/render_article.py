@@ -154,6 +154,51 @@ def render_note_md(d):
         lines.append("### 限制面")
         for item in limitations:
             lines.append(f"- {item_text(item)}")
+
+    # 业务落地指引（销售导向 · Battlecard 格式）
+    # 借鉴 pm-skills/pm-go-to-market 的 competitive-battlecard 框架
+    battlecard = {
+        "target_audience": as_list(d.get('target_audience')),
+        "sales_use_cases": as_list(d.get('sales_use_cases')),
+        "objection_handling": as_list(d.get('objection_handling')),
+        "copy_paste_lines": as_list(d.get('copy_paste_lines')),
+        "key_quotes": as_list(d.get('key_quotes')),
+    }
+
+    if any(battlecard.values()):
+        lines.append("\n---")
+        lines.append("\n## 🎯 销售战斗卡")
+
+        if battlecard["target_audience"]:
+            lines.append("\n### 👥 对谁有用")
+            for item in battlecard["target_audience"]:
+                lines.append(f"- {item_text(item)}")
+
+        if battlecard["sales_use_cases"]:
+            lines.append("\n### 💼 可以用在什么场景")
+            for item in battlecard["sales_use_cases"]:
+                lines.append(f"- {item_text(item)}")
+
+        if battlecard["objection_handling"]:
+            lines.append("\n### 🛡️ 常见反对意见回应")
+            for item in battlecard["objection_handling"]:
+                text = item_text(item)
+                if "：" in text or ":" in text:
+                    lines.append(f"- {text}")
+                else:
+                    lines.append(f"- 客户说：\"{text}\" → 回应：...")
+
+        if battlecard["copy_paste_lines"]:
+            lines.append("\n### 📋 可以直接复制的话术")
+            for item in battlecard["copy_paste_lines"]:
+                lines.append(f"> {item_text(item)}")
+                lines.append("")
+
+        if battlecard["key_quotes"]:
+            lines.append("\n### 💬 论文金句（可以直接引用）")
+            for item in battlecard["key_quotes"]:
+                lines.append(f"- {item_text(item)}")
+
     return "\n".join(lines)
 
 

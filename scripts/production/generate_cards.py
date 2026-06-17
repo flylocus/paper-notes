@@ -252,11 +252,48 @@ def render_combined_card(data, out_path):
         img.paste(logo, (logo_x, y), mask)
         y += new_h + 30
 
-    # ===== 一行标题：中文 + 英文缩写 =====
-    title_text = "科学仪器 Agent 基准：LabOSBench"
-    title_w = draw.textlength(title_text, font=title_font)
-    draw.text(((CARD_W - title_w) // 2, y), title_text, fill=ACCENT, font=title_font)
-    y += 55
+    # ===== 标题：超长时自动折成两行 =====
+    title_text = data["info"]["title_cn"]
+    available_w = RIGHT_MARGIN - PADDING
+    title_font_large = load_font(FONT_BOLD, 22)
+
+    if draw.textlength(title_text, font=title_font_large) <= available_w:
+        # 一行放得下
+        title_w = draw.textlength(title_text, font=title_font_large)
+        draw.text(((CARD_W - title_w) // 2, y), title_text, fill=ACCENT, font=title_font_large)
+        y += 45
+    else:
+        # 折成两行：中文标点 > 空格 > 中英文交界
+        split_pos = len(title_text) // 2
+        # 第一优先级：中文标点后（扩大搜索范围到 1/4 ~ 3/4）
+        for sep in ["：", "，", "；", "、", "？", "！"]:
+            idx = title_text.find(sep, len(title_text) // 4, len(title_text) * 3 // 4)
+            if idx != -1:
+                split_pos = idx + 1
+                break
+        else:
+            # 第二优先级：空格处（英文单词间）
+            space_idx = title_text.find(" ", len(title_text) // 3, len(title_text) * 2 // 3)
+            if space_idx != -1:
+                split_pos = space_idx + 1
+            else:
+                # 第三优先级：中英文交界处
+                for i in range(len(title_text) - 1):
+                    c1, c2 = title_text[i], title_text[i + 1]
+                    c1_is_cn = "一" <= c1 <= "鿿"
+                    c2_is_en = c2.isascii() and c2.isalpha()
+                    if c1_is_cn and c2_is_en and len(title_text) // 4 <= i <= len(title_text) * 3 // 4:
+                        split_pos = i + 1
+                        break
+
+        line1 = title_text[:split_pos]
+        line2 = title_text[split_pos:]
+
+        line1_w = draw.textlength(line1, font=title_font_large)
+        line2_w = draw.textlength(line2, font=title_font_large)
+        draw.text(((CARD_W - line1_w) // 2, y), line1, fill=ACCENT, font=title_font_large)
+        draw.text(((CARD_W - line2_w) // 2, y + 30), line2, fill=ACCENT, font=title_font_large)
+        y += 70
 
     # ===== 分割线 1 =====
     draw.rectangle([PADDING, y, RIGHT_MARGIN, y + 2], fill=ACCENT2)
