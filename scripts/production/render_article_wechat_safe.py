@@ -300,7 +300,9 @@ def render(d: dict, out_dir: Path, *, title: str = "", conclusion: str = "", foo
             out.extend(render_paragraphs(body))
 
     out.append(f'<h2 style="{THEME["h2_orange"]}">D. 关键结果</h2>')
-    result_cards = render_result_cards(d.get("result_table"))
+    # 兼容新旧字段名：table (旧) / result_table (新)
+    table_data = d.get("result_table") or d.get("table")
+    result_cards = render_result_cards(table_data)
     if result_cards:
         out.append(result_cards)
     else:
