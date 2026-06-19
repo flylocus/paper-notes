@@ -123,6 +123,22 @@ FileNotFoundError: inputs/chatgpt/YYYYMMDD.txt
 
 这是正确的 fail-fast 行为。补齐输入后重跑即可。
 
+### 5.1 DeepSeek 候选增强（可选）
+
+如果已经设置 `DEEPSEEK_API_KEY`，可以在 `make phase1` 后让 DeepSeek 生成候选适配说明：
+
+```bash
+make deepseek-candidates DATE=20260427
+```
+
+输出位于：
+
+```text
+fused/deepseek_candidate_notes_YYYYMMDD.json
+```
+
+该文件只作为 Top 3 讨论辅助，不替代 `outputs/READY_INDEX.md` 去重、PDF 核验或人工选题判断。完整说明见 `docs/DEEPSEEK_API_LAYER.md`。
+
 ---
 
 ## 6. 选题规则

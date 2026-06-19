@@ -34,12 +34,12 @@ NEGATIVE_TERMS = [
 
 def parse_chatgpt_input(text):
     papers = []
-    entries = re.split(r'\n(?=\d+\))', text)
+    entries = re.split(r'\n(?=\d+[\).]\s+)', text)
     for entry in entries:
-        if not entry.strip() or not re.match(r'\d+\)', entry.strip()):
+        if not entry.strip() or not re.match(r'\d+[\).]\s+', entry.strip()):
             continue
         lines = entry.strip().split('\n')
-        title_match = re.match(r'\d+\)\s+(.+)', lines[0])
+        title_match = re.match(r'\d+[\).]\s+(.+)', lines[0])
         if not title_match:
             continue
         title = title_match.group(1).strip()
@@ -50,9 +50,9 @@ def parse_chatgpt_input(text):
             m = re.search(r'arXiv:\s*(?:https?://arxiv\.org/abs/)?(\d{4}\.\d+)', line)
             if m:
                 arxiv_id = m.group(1)
-            if 'Why valuable' in line or '为什么' in line:
+            if 'Why valuable' in line or 'Why it matters' in line or '为什么' in line:
                 why_valuable = line.split(':', 1)[-1].strip() if ':' in line else ""
-            if 'Keywords' in line or '关键词' in line:
+            if 'Keywords' in line or 'Read for' in line or '关键词' in line:
                 kw_text = line.split(':', 1)[-1].strip() if ':' in line else ""
                 keywords = [k.strip() for k in kw_text.split(',') if k.strip()]
         if arxiv_id:
@@ -69,7 +69,7 @@ def parse_chatgpt_input(text):
 
 def parse_grok_input(text):
     papers = []
-    blocks = re.split(r'\n(?=\*\*\d+\.)|\n(?=\d+\.)', text)
+    blocks = re.split(r'\n(?=(?:#{1,6}\s*)?\*?\*?\d+\.)', text)
     for entry in blocks:
         m_id = re.search(r'https?://arxiv.org/abs/(\d{4}\.\d+)|arXiv[:：]\s*(\d{4}\.\d+)', entry)
         if not m_id:
@@ -77,11 +77,14 @@ def parse_grok_input(text):
         arxiv_id = m_id.group(1) or m_id.group(2)
         lines = [x.strip('* ').strip() for x in entry.splitlines() if x.strip()]
         title = lines[0] if lines else arxiv_id
+        title = re.sub(r'^#{1,6}\s*', '', title).strip()
         title = re.sub(r'^\d+\.?\s*', '', title).strip()
+        title = re.sub(r'\s*\(arXiv:.*$', '', title).strip()
+        title = title.strip('* ').strip()
         why_value = ''
-        m_why = re.search(r'为什么火[^:：]*[:：]\s*(.+)', entry)
+        m_why = re.search(r'(?:为什么火[^:：]*|Why top\?|Why notable\?)[:：]\s*\**\s*(.+)', entry)
         if m_why:
-            why_value = m_why.group(1).strip()
+            why_value = m_why.group(1).strip().strip('* ')
         keywords = []
         m_kw = re.search(r'Keywords[:：]\s*(.+)', entry)
         if m_kw:
