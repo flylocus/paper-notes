@@ -51,7 +51,7 @@ def as_list(value):
 def item_text(item):
     if isinstance(item, dict):
         title = item.get('title') or item.get('term') or item.get('label') or ''
-        body = item.get('body') or item.get('definition') or item.get('text') or item.get('value') or ''
+        body = item.get('body') or item.get('explanation') or item.get('definition') or item.get('text') or item.get('value') or ''
         if title and body:
             return f"**{title}**：{body}"
         return title or body

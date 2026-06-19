@@ -81,7 +81,7 @@ def as_list(value: object) -> list:
 def item_parts(item: object) -> tuple[str, str]:
     if isinstance(item, dict):
         title = item.get("title") or item.get("term") or item.get("label") or ""
-        body = item.get("body") or item.get("definition") or item.get("text") or item.get("value") or ""
+        body = item.get("body") or item.get("explanation") or item.get("definition") or item.get("text") or item.get("value") or ""
         return str(title), str(body)
     return "", str(item)
 
