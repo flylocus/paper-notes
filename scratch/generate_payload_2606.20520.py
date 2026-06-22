@@ -116,7 +116,7 @@ evidence_ledger = {
 
 article_payload = {
   **card_payload,
-  "A_research_problem": "在企业级 Agent 落地中，仅给自主 Agent 赋予长期生产环境凭据（如 AWS IAM Access Key 或数据库密码）会导致极高的安全风险。AI Agent 本质上是非确定性的推理过程，如果它直接持有修改物理或云资源的 credentials，任何提示词注入（Prompt Injection）或幻觉调用都可能瞬间引发越权操作、数据删除或资源滥用。现有的准入网关（如 SAB）仅在提案阶段签发静态证书，却无法在执行（Mutation）瞬间强制验证，形成了合规漏洞。我们必须把 Agent 动作的提案（Proposal）、准入（Admission） and 具体执行（Execution）三者彻底解耦，使 Agent 原生不具备直接执行能力。",
+  "A_research_problem": "在企业级 Agent 落地中，仅给自主 Agent 赋予长期生产环境凭据（如 AWS IAM，即 Identity and Access Management 统一身份与访问管理 Access Key，或数据库密码）会导致极高的安全风险。AI Agent 本质上是非确定性的推理过程，如果它直接持有修改物理或云资源的凭据（Credentials），任何提示词注入（Prompt Injection）或幻觉调用都可能瞬间引发越权操作、数据删除或资源滥用。现有的准入网关（如 SAB，主权保证边界）仅在提案阶段签发静态证书，却无法在执行（Mutation）瞬间强制验证，形成了合规漏洞。我们必须把 Agent 动作的提案（Proposal）、准入（Admission）与具体执行（Execution）三者彻底解耦，使 Agent 原生不具备直接执行能力。",
   "B_core_contributions": [
     "提出主权执行代理（Sovereign Execution Broker, SEB）架构，作为 certificate-bound 动态权限的运行时强制执行边界，阻断任何非经纪商（Non-broker）身份的直接基础设施修改操作。",
     "设计了一套极简的 Ω 证书认证、撤销与重放校验谓词，能够在执行时刻（mutation time）校验证书有效期、策略版本、废止纪元（revocation epochs）以及运行期状态漂移（state drift）。",
@@ -130,8 +130,14 @@ article_payload = {
     "Figure 5/Section VI.E 状态漂移检测：在 proposal 与 execution 的时间窗口内注入数据库/集群状态变更，SEB 成功识别了 100% 的 drift 案例，挂起或拒绝了执行提案，有效防范了竞争条件（Race Conditions）安全漏洞。"
   ],
   "E_industry_implications": [
-    "为企业部署具备自主执行（AWS 部署、CI/CD 触发、数据库写入）的 Agent Control Planes 提供了一套工业级的零信任（Zero Trust）安全解决方案，实现了“非确定性大脑”与“确定性骨干网”的物理隔离。",
-    "通过外置 Omega 证书与 SEB 决策日志，为金融、审计、运维行业提供天然的强审计线索（Audit Trails），彻底解决 LLM 内部决策不可追溯的合规难题。"
+    {
+      "title": "01. 确立零信任隔离网关，于高危写操作场景中打消失控焦虑",
+      "body": "为企业部署具备自主执行（如云平台部署、CI/CD 触发、数据库写入）的 Agent Control Planes 时，切勿使用静态凭据。应通过 SEB 作为零信任隔离网关，将非确定性的 LLM 决策与确定性的基础设施指令彻底隔离。"
+    },
+    {
+      "title": "02. 引入 Omega 动态证书与审计日志，为金融/合规审计提供强追溯证据",
+      "body": "在金融、医疗等强监管场景下，使用 Omega 证书和 SEB 的每一笔 mutation 操作都会留下强审计线索（Audit Trails）。在面临合规审计时，可直接复用 SEB 决策日志，秒级追溯单笔失控调用的源头与准入合同。"
+    }
   ],
   "F_one_line_judgement": "说白了，它是通过将 Agent 的动作提案与持有 production 凭据的 SEB 运行时拦截器彻底分离，利用加密的 Ω 证书做执行时刻的零信任控制，从根本上封死了 Agent 因幻觉或注入攻击导致基础设施失控的可能。不过，由于 SEB 架构依赖外部基础设施与 API 网关（如 IAM 临时凭证派生）的物理隔离，对既有 legacy 系统的改造侵入性极强，且在网络分区（Network Partition）状态下如何处理本地缓存废止纪元的时效性与一致性仍待优化。\n\n【Actionable Insight】在规划多 Agent 复杂工作流（如自动运维、自动化代码发布）的企业，切记绝不能给 Agent 容器配置任何 standing keys（长期 Access Key）。应当在基础设施网关层配置 SEB 中间件，规定生产 mutation API 仅接受来自 broker 的 scoped token，并使用短期 Ω 证书传递命令。在下周的设计方案中，我们建议先基于本地 Kubernetes 集群部署一个 SEB 代理网关，以进行安全策略的回测与延迟性能基准测试。\n\n【🗳️ 下期选题由你决定】\n今天我们选读了 Agentic 安全网关 SEB 这一篇，另外还有三篇高价值论文。欢迎大家在推文末尾参与投票，得票最高者我们将作为后续增补解读的依据：\n\n① 2606.20363 (CUA Skills): 计算机使用 Agent 的 SKILL.md 技能自动生成。通过 GUI 交互轨迹挖掘与 GRPO 训练，诊断自动技能挖掘的泛化性障碍与政策约束。\n\n② 2606.20510 (Sound Verification): 针对 AI Agent 的高效概率性策略验证框架。利用分布鲁棒优化计算 upper bound，在 ambiguity 场景下防范 PII 泄漏与安全违规。\n\n③ 2606.20493 (Contagion Networks): 多 Agent LLM 系统中的评估偏差传播（Contagion）。量化同一/跨模型代理间的偏差传播系数，并提出三模型委员会的平抑方法。",
   "discussion_notes": [
@@ -192,8 +198,8 @@ article_payload = {
     "PDF第3-4节SEB执行模型与证书和重放校验谓词",
     "PDF第6节Kubernetes与AWS原型性能评估数据"
   ],
-  "so_what": "置信度不能一概而论。让 Agent 学会‘装傻提问’比‘假装自信执行’在商业落地中安全得多。分解不确定性是提升 ToB Agent UX 和安全水位最经济的工程手段。",
-  "feige_view": "从销售和交付角度看：很多客户不信任 Agent，就是怕它任务不清时瞎干。如果我们把‘请求不确定性拦截’做成可视化的安全门（Security Gate），当 ut 超标时高亮提示‘正在向用户澄清验证’，能够瞬间打消客户的安全疑虑，大幅提高方案的中标率。",
+  "so_what": "Agent的安全性防线，核心并不在于如何过滤非法的Prompt或者提高模型的对齐程度，而在于必须在基础设施层面剥夺它的Standing Credentials（静态凭据）。允许智能体直接持有生产钥匙进行物理改写是极其危险的安全隐患；通过SEB进行证书校验与运行时拦截，将动作解耦为短期特许，才是企业级Agent控制平面的安全必修课。",
+  "feige_view": "从销售和交付角度看：很多大型政企客户之所以对AI Agent持观望态度，最主要的心结就是担心Agent一旦失控会触发毁灭性的API写入。向他们推销‘SAB+SEB安全网关’的双向合规机制，在逻辑准入外筑起一道硬隔离的物理防线，能有效消除企业对AI失控的焦虑，大幅加速ToB项目的中标与交付进度。",
   "limitations": [
     {
       "title": "物理隔离改造侵入性强",
