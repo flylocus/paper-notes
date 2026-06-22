@@ -148,32 +148,10 @@ def render_result_cards(table: dict | None) -> str:
     return "\n".join(out)
 
 
-# ── 作者签名（深色卡片版 · Dare to B2B 品牌）────────────────────
-AUTHOR_QR = "author-qr-code.png"
-AUTHOR_SIGNATURE = f'''<section style="margin:24px 0 8px;border-radius:8px;overflow:hidden;">
-  <!-- 主卡片：深蓝底三栏布局 -->
-  <table style="width:100%;border-collapse:collapse;margin:0;font-size:0;background:linear-gradient(135deg,#0b1430 0%,#182848 100%);">
-    <tr>
-      <!-- 左栏：头像占位（圆形首字母，无头像时的优雅降级） -->
-      <td style="width:30%;vertical-align:middle;padding:18px 10px 18px 18px;text-align:center;">
-        <span style="display:inline-block;width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#2f6bff,#4cc3ff);color:#ffffff;font-size:28px;font-weight:800;line-height:64px;text-align:center;box-shadow:0 2px 12px rgba(47,107,255,0.35);">S</span>
-      </td>
-      <!-- 中栏：文字信息 -->
-      <td style="width:45%;vertical-align:middle;padding:18px 8px;">
-        <p style="margin:0 0 6px;font-size:17px;font-weight:800;color:#ffffff;line-height:1.4;letter-spacing:0.5px;">申飞</p>
-        <p style="margin:0 0 4px;font-size:12px;color:#93c5fd;line-height:1.5;">ToB 战略叙事构建者</p>
-        <p style="margin:0;font-size:11px;color:#94a3b8;line-height:1.5;">微信：<span style="color:#4cc3ff;font-weight:600;">trafly</span></p>
-      </td>
-      <!-- 右栏：二维码 -->
-      <td style="width:25%;vertical-align:middle;padding:18px 18px 18px 8px;text-align:right;">
-        <img src="{AUTHOR_QR}" alt="微信二维码" style="width:72px;height:72px;display:inline-block;border:2px solid rgba(255,255,255,0.15);border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,0.2);" />
-      </td>
-    </tr>
-  </table>
-  <!-- 底栏：品牌标签 -->
-  <div style="background:linear-gradient(90deg,#2f6bff 0%,#4cc3ff 50%,#8b5cf6 100%);padding:6px 0;text-align:center;">
-    <span style="font-size:10px;color:#ffffff;letter-spacing:3px;font-weight:600;">DARE TO B2B · 深度内容 连接价值</span>
-  </div>
+# ── 作者签名（直接插图版）────────────────────
+AUTHOR_SIGNATURE_FILE = "author-signature-card.png"
+AUTHOR_SIGNATURE = f'''<section style="margin:24px 0 8px;text-align:center;border-radius:8px;overflow:hidden;">
+  <img src="{AUTHOR_SIGNATURE_FILE}" alt="申飞" style="width:100%;display:block;border:0;border-radius:8px;" />
 </section>'''
 
 
@@ -305,6 +283,8 @@ def render(d: dict, out_dir: Path, *, title: str = "", conclusion: str = "", foo
     result_cards = render_result_cards(table_data)
     if result_cards:
         out.append(result_cards)
+    elif table_data:
+        out.append(render_table(table_data))
     else:
         out.append(render_bullets(as_list(d.get("D_key_results"))))
     source_notes = as_list(d.get("source_notes"))
@@ -423,15 +403,15 @@ def main() -> None:
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=bool(args.author_qr))
 
-    # 作者签名：如果提供二维码路径，复制并全局开启
+    # 作者签名：如果提供签名卡路径，复制并全局开启
     global AUTHOR_SIGNATURE
     if args.author_qr:
         qr_src = Path(args.author_qr)
         if qr_src.exists():
             import shutil
-            shutil.copy2(qr_src, out_dir / AUTHOR_QR)
+            shutil.copy2(qr_src, out_dir / AUTHOR_SIGNATURE_FILE)
         else:
-            print(f"⚠ 二维码图片未找到: {args.author_qr}，跳过作者签名")
+            print(f"⚠ 签名卡图片未找到: {args.author_qr}，跳过作者签名")
             AUTHOR_SIGNATURE = ""
 
     data = json.loads(payload_path.read_text(encoding="utf-8"))

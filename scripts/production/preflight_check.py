@@ -14,15 +14,13 @@ from pathlib import Path
 REQUIRED_BY_MODE = {
     "article": [
         "cover_235.png",
-        "info_card.png",
-        "score_card.png",
-        "article_editor_ready.html",
+        "header_card.png",
+        "article_wechat_safe.html",
     ],
     "publish": [
         "cover_235.png",
-        "info_card.png",
-        "score_card.png",
-        "article_editor_ready.html",
+        "header_card.png",
+        "article_wechat_safe.html",
         "note.md",
         "publish_pack.md",
     ],
@@ -50,7 +48,7 @@ WARNING_PATTERNS = [
 
 TEXT_FILES_ALWAYS_SCAN = [
     "note.md",
-    "article_editor_ready.html",
+    "article_wechat_safe.html",
     "publish_pack.md",
 ]
 
@@ -124,20 +122,19 @@ def check_required_files(out_dir: Path, mode: str, issues: list[dict]) -> None:
 
 
 def check_article_consistency(out_dir: Path, issues: list[dict]) -> None:
-    article_path = out_dir / "article_editor_ready.html"
+    article_path = out_dir / "article_wechat_safe.html"
     if not article_path.exists():
         return
 
     text = read_text(article_path)
-    for image_name in ("score_card.png", "info_card.png"):
-        if image_name not in text:
-            add_issue(
-                issues,
-                "blocking",
-                "article_missing_image_reference",
-                f"article_editor_ready.html does not reference {image_name}",
-                str(article_path),
-            )
+    if "header_card.png" not in text:
+        add_issue(
+            issues,
+            "blocking",
+            "article_missing_image_reference",
+            f"article_wechat_safe.html does not reference header_card.png",
+            str(article_path),
+        )
 
 
 def check_metadata_presence(out_dir: Path, issues: list[dict]) -> None:
@@ -202,7 +199,7 @@ def check_affiliations(out_dir: Path, issues: list[dict]) -> None:
 
 def check_report_freshness(out_dir: Path, issues: list[dict]) -> None:
     """Post-QA edits without re-running QA leave stale PASS reports behind."""
-    article = out_dir / "article_editor_ready.html"
+    article = out_dir / "article_wechat_safe.html"
     if not article.exists():
         return
     article_mtime = article.stat().st_mtime
@@ -213,7 +210,7 @@ def check_report_freshness(out_dir: Path, issues: list[dict]) -> None:
                 issues,
                 "warning",
                 "qa_report_stale",
-                f"article_editor_ready.html was modified after {name}; "
+                f"article_wechat_safe.html was modified after {name}; "
                 "re-run make qa to refresh validation",
                 str(report),
             )

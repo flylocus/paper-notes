@@ -113,8 +113,17 @@ def parse_json_object(text: str) -> dict[str, Any]:
         start = stripped.find("{")
         end = stripped.rfind("}")
         if start < 0 or end <= start:
+            print("--- FAILED TO PARSE MODEL OUTPUT ---")
+            print(text)
+            print("-----------------------------------")
             raise DeepSeekError("Model output did not contain a JSON object") from exc
-        data = json.loads(stripped[start : end + 1])
+        try:
+            data = json.loads(stripped[start : end + 1])
+        except json.JSONDecodeError as exc2:
+            print("--- FAILED TO PARSE MODEL OUTPUT (SUBSTRING) ---")
+            print(stripped[start : end + 1])
+            print("-----------------------------------------------")
+            raise exc2
     if not isinstance(data, dict):
         raise DeepSeekError("Model output JSON must be an object")
     return data
