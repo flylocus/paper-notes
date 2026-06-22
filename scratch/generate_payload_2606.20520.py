@@ -63,7 +63,7 @@ def build_score_rationale_detail(score_val, dims, rationale):
         "dimension_rationales": dimension_rationales
     }
 
-reason = "该论文直击AI Agent在企业生产环境（Cloud/Kubernetes/AWS）中落地时的权限安全与审计痛点。其核心创新点在于提出了一种主权执行代理（Sovereign Execution Broker, SEB）架构，将Agent的“proposal (非确定性动作建议)”、“admission (安全准入认证)”和“execution (具体执行)”在物理和逻辑上彻底剥离。Agent不持有长期生产凭证，而是由SAB根据安全合同签发Omega证书，再由SEB在执行瞬间校验撤销与状态漂移，并分发短期凭证进行API调用，从而闭栏了非确定性推理与确定性基础设施变更之间的安全围栏。实验在AWS和Kubernetes集群上对延迟、证书撤销、漂移检测进行了实测，具有极强的工业落地和治理参考价值。"
+reason = "该论文直击AI Agent在企业生产环境（Cloud/Kubernetes/AWS）中落地时的权限安全与审计痛点。其核心创新点在于提出了一种主权执行代理（Sovereign Execution Broker, SEB）架构，将Agent的“proposal (非确定性动作建议)”、“admission (安全准入认证)”和“execution (具体执行)”在物理和逻辑上彻底剥离。Agent不持有长期生产凭证，而是由SAB根据安全合同签发Omega证书，再由SEB在执行瞬间校验撤销与状态漂移，并分发短期凭证进行API调用，从而闭栏了非确定性推理与确定性基础设施变更之间的安全围栏。实验在AWS and Kubernetes集群上对延迟、证书撤销、漂移检测进行了实测，具有极强的工业落地和治理参考价值。"
 
 score_rationale_detail = build_score_rationale_detail(8.6, card_payload["score"]["dimensions"], reason)
 
@@ -116,7 +116,7 @@ evidence_ledger = {
 
 article_payload = {
   **card_payload,
-  "A_research_problem": "在企业级 Agent 落地中，仅给自主 Agent 赋予长期生产环境凭据（如 AWS IAM Access Key 或数据库密码）会导致极高的安全风险。AI Agent 本质上是非确定性的推理过程，如果它直接持有修改物理或云资源的 credentials，任何提示词注入（Prompt Injection）或幻觉调用都可能瞬间引发越权操作、数据删除或资源滥用。现有的准入网关（如 SAB）仅在提案阶段签发静态证书，却无法在执行（Mutation）瞬间强制验证，形成了合规漏洞。我们必须把 Agent 动作的提案（Proposal）、准入（Admission）和具体执行（Execution）三者彻底解耦，使 Agent 原生不具备直接执行能力。",
+  "A_research_problem": "在企业级 Agent 落地中，仅给自主 Agent 赋予长期生产环境凭据（如 AWS IAM Access Key 或数据库密码）会导致极高的安全风险。AI Agent 本质上是非确定性的推理过程，如果它直接持有修改物理或云资源的 credentials，任何提示词注入（Prompt Injection）或幻觉调用都可能瞬间引发越权操作、数据删除或资源滥用。现有的准入网关（如 SAB）仅在提案阶段签发静态证书，却无法在执行（Mutation）瞬间强制验证，形成了合规漏洞。我们必须把 Agent 动作的提案（Proposal）、准入（Admission） and 具体执行（Execution）三者彻底解耦，使 Agent 原生不具备直接执行能力。",
   "B_core_contributions": [
     "提出主权执行代理（Sovereign Execution Broker, SEB）架构，作为 certificate-bound 动态权限的运行时强制执行边界，阻断任何非经纪商（Non-broker）身份的直接基础设施修改操作。",
     "设计了一套极简的 Ω 证书认证、撤销与重放校验谓词，能够在执行时刻（mutation time）校验证书有效期、策略版本、废止纪元（revocation epochs）以及运行期状态漂移（state drift）。",
@@ -207,6 +207,29 @@ article_payload = {
       "title": "证书有效期时间差风险",
       "body": "在准入评估到具体执行的延迟窗口内，微小的状态漂移仍可能绕过静态合同，需细化状态校验规则的精度。"
     }
+  ],
+  "target_audience": [
+    "正在开发或部署自动运维（Cloud/Kubernetes/AWS）、CI/CD 触发、数据库写入等自主变动操作 Agent 的团队。",
+    "金融、医疗、政务等强监管行业，对 AI Agent 运行时操作的权限合规性与审计链要求极高的安全与合规架构团队。",
+    "关注 AI Agent 的权限潜移（Authority Creep）、提示词注入攻击以及模型幻觉误操作风险的 CTO 与首席安全官。"
+  ],
+  "sales_use_cases": [
+    "销售演示时展示 Agent 的‘安全隔离网关（SEB）’以打消客户对‘Agent 误操作把云资源或数据库删了’的疑虑。",
+    "强安全管控环境下的多 Agent 协作审计，向合规部门与技术主管展示如何把非确定性推理限制在加密 Omega 证书合同中。",
+    "为自主 Agent 提供秒级应急控制，一旦发现模型决策异常或检测到运行状态漂移，可在 SEB 执行网关处强行熔断并撤销操作。"
+  ],
+  "objection_handling": [
+    "客户说：‘我们已经在网络层配置了静态的 IAM 角色和 API 授权限制。’ 回应：静态授权（ACL）只能验证‘Agent容器是谁’，但无法阻止 Agent 内部推理出现幻觉后滥用这些凭证去修改资源。SEB 强制要求每个变更动作必须对应一个有针对性 SAB 评估签发的 Omega 证书，否则底层网关强行拒绝，这是物理隔离而非逻辑限制。",
+    "客户说：‘我们在 Prompt 里写明安全隔离守则就可以了，不需要改网关。’ 回应：提示词是软性约束，极易受到提示词注入（Prompt Injection）和对抗性攻击的影响；将安全屏障外置于 SEB 这样硬编码的确定性 Broker 层才是零信任架构的安全刚需。"
+  ],
+  "copy_paste_lines": [
+    "企业级 Agent 安全的底线：决不能给 Agent 派发任何长期拥有的生产权限 Access Keys，Agent 只能持有提案权，执行权必须归 SEB 所有。",
+    "只防住 Prompt 是防君子不防小人。在物理执行层通过 Omega 动态证书和 SEB 网关双向合规锁定，才是 ToB 落地的主权防线。",
+    "非确定性决策必须运行在确定性的安全网关之内，这就是 SEB 框架对企业生产资源提供的硬性物理围网。"
+  ],
+  "key_quotes": [
+    "Production mutation authority should not reside inside non-deterministic reasoning processes.",
+    "By separating proposal, admission, and execution, SEB turns certified authority into a short-lived, revocable, auditable runtime capability."
   ]
 }
 
