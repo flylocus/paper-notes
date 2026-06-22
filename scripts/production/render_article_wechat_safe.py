@@ -223,13 +223,13 @@ def render(d: dict, out_dir: Path, *, title: str = "", conclusion: str = "", foo
         # 9:16 竖版模式：居中显示，左右留白，适配手机窄屏
         out.append(f'<section style="margin:10px 0;text-align:center;"><img src="header_card.png" alt="论文评分与信息" style="max-width:100%;width:360px;display:inline-block;border:0;border-radius:8px;" /></section>')
         so_what = d.get("so_what", "") or d.get("feige_view", "") or ""
-        intro_lead = so_what.strip()[:120] if so_what.strip() else "快速了解这篇论文的核心价值与产业意义。"
+        intro_lead = so_what.strip() if so_what.strip() else "快速了解这篇论文的核心价值与产业意义。"
         out.append(f'<section style="{THEME["intro_lead"]}">💡 {esc(intro_lead)}</section>')
     elif score_img.exists() and info_img.exists():
         # 双图模式：两张图 + HTML元信息（向后兼容）
         out.append(f'<section style="{THEME["image"]}"><img src="score_card.png" alt="评分卡" style="{THEME["img"]}" /></section>')
         so_what = d.get("so_what", "") or d.get("feige_view", "") or ""
-        intro_lead = so_what.strip()[:120] if so_what.strip() else "快速了解这篇论文的核心价值与产业意义。"
+        intro_lead = so_what.strip() if so_what.strip() else "快速了解这篇论文的核心价值与产业意义。"
         out.append(f'<section style="{THEME["intro_lead"]}">💡 {esc(intro_lead)}</section>')
 
         authors = ", ".join(info.get("authors", [])[:5])
