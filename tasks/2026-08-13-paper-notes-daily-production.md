@@ -2,7 +2,7 @@
 
 ## Status
 
-- Stage: 未开始（明日首任务）
+- Stage: **✅ 试点通过（2026-08-13）**——ReTree 2608.10676 + Catastrophic Remembering 2608.11095 双发均按五段式产出，validate 全 A 级；render_article_wechat_safe.py 加 --five-seg，validate_output.py 五段式分支已上线；style-optimization 与 paper-notes SKILL 已定稿五段式正式标准；六段仅兼容历史。
 - 试点决策：申飞 2026-08-12 —— 论文速记格式感太重，改用五段式叙事流
 
 ## 试点指令（第一条任务必须执行）

@@ -286,6 +286,8 @@ def check_adverb_filler(html: str | None, _data: dict | None) -> str | None:
 def check_glossary(html: str | None, _data: dict | None) -> str | None:
     if html is None:
         return "article_editor_ready.html not found"
+    if "五、落点" in html or "一、钩子" in html:
+        return None  # 五段式叙事流：术语在正文括号内定义，无独立术语框
     # Check for terminology section near the top
     if "术语说明" not in html[:3000]:
         return "未在文章前部找到术语说明（<strong>术语说明</strong>）"
@@ -305,6 +307,8 @@ def check_fragment_sentences(html: str | None, _data: dict | None) -> str | None
         r"别不信",
         r"别急",
         r"本质上[，,]",
+        r"别高兴太早",
+        r"别急着",
     ]
     found_any = any(re.search(p, html) for p in fragment_patterns)
     if not found_any:
@@ -464,6 +468,8 @@ def check_claim_evidence_coverage(_html: str | None, data: dict | None) -> str |
 def check_so_what_mechanism_judgement(html: str | None, _data: dict | None) -> str | None:
     if html is None:
         return "article_editor_ready.html not found"
+    if "五、落点" in html or "一、钩子" in html:
+        return None  # 五段式叙事流：So What 融进判断段/落点段，无独立 insight-box
     text = _strip_html(html)
     if "So What" not in text and "so what" not in text.lower():
         return "未找到So What解释段"
@@ -502,6 +508,37 @@ def check_html_wechat_safe_integrity(_html: str | None, _data: dict | None, out_
         return "article_wechat_safe.html 结尾缺失正确的闭合标签，可能被截断"
     
     # 检查关键部分是否存在
+    is_five_seg = ("五、落点" in content) or ("一、钩子" in content)
+
+    if is_five_seg:
+        # 五段式叙事流（2026-08-13 试点通过）：钩子→判断→证据→边界→落点
+        for sec, err in [
+            ("一、", "五段式缺少「一、钩子」"),
+            ("二、", "五段式缺少「二、判断」"),
+            ("三、", "五段式缺少「三、证据」"),
+            ("四、", "五段式缺少「四、边界」"),
+            ("五、", "五段式缺少「五、落点」"),
+        ]:
+            if sec not in content:
+                return err
+        for kw, err in [
+            ("证据 0", "五段式不应出现证据徽章（应融进段落）"),
+            ("术语说明", "五段式不应出现独立术语框（术语括号内定义）"),
+            ("销售战斗卡", "五段式不应含销售战斗卡（移出到 sales_card.md）"),
+        ]:
+            if kw in content:
+                return err
+        if not (out_dir / "sales_card.md").exists():
+            return "五段式要求 sales_card.md（战斗卡移出文件）存在"
+        if "数据来源" not in content:
+            return "五段式要求文末数据来源 footnote"
+        # 只检查钩子段（第一个「一、」标题后到「二、」标题前），不是全文
+        hook_match = re.search(r"一、[^<]*</h2>(.*?)<h2[^>]*>二、", content, re.DOTALL)
+        hook_text = hook_match.group(1) if hook_match else ""
+        if re.search(r"本文介绍|这篇论文", hook_text):
+            return "五段式首段应为钩子，不能以「本文介绍/这篇论文」开头"
+        return None
+
     required_sections = [
         ("限制面", "缺少「限制面」部分"),
         ("来源链接", "缺少「来源链接」部分"),
@@ -513,7 +550,7 @@ def check_html_wechat_safe_integrity(_html: str | None, _data: dict | None, out_
             return error_msg
     
     # 检查 F 段是否完整
-    f_section = re.search(r'<h2[^>]*>F\.', content)
+    f_section = re.search(r'<h2[^>]*>F\\.', content)
     if f_section:
         after_f = content[f_section.end():]
         # F 段后应该有限制面

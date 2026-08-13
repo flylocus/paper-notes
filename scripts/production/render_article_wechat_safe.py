@@ -193,7 +193,7 @@ def strip_label(text: str, label: str) -> str:
     return text[len(label):].lstrip("：: ") if text.startswith(label) else text
 
 
-def render(d: dict, out_dir: Path, *, title: str = "", conclusion: str = "", footer_mode: str = "auto") -> str:
+def render(d: dict, out_dir: Path, *, title: str = "", conclusion: str = "", footer_mode: str = "auto", five_seg: bool = False) -> str:
     info = d.get("info") or {}
     score = d.get("score") or {}
     title = title or f"【论文速记】{info.get('title_cn') or d.get('paper_title') or ''}"
@@ -265,131 +265,150 @@ def render(d: dict, out_dir: Path, *, title: str = "", conclusion: str = "", foo
         out.append(f'<p style="{THEME["info_row"]}"><span style="{THEME["info_label"]}">评分：</span>{total_text} / 10</p>')
         out.append('</section>')
 
-    glossary = as_list(d.get("glossary") or d.get("terminology_notes"))
-    if glossary:
-        out.append(f'<section style="{THEME["soft"]}">')
-        out.append(f'<p style="{THEME["p"]}"><span style="color:#0b1430;font-weight:800;">术语说明</span></p>')
-        for item in glossary:
-            term, definition = item_parts(item)
-            if term and definition:
-                out.append(f'<p style="{THEME["term"]}"><span style="color:#0b1430;font-weight:700;">{esc(term)}</span>：{esc(definition)}</p>')
-            else:
-                out.append(f'<p style="{THEME["term"]}">{esc(term or definition)}</p>')
-        out.append("</section>")
+    if five_seg:
+        # 五段式叙事流（2026-08-13 试点通过）：正文由 Agent 手写填充
+        # 钩子→判断→证据→边界→落点；数字嵌句、术语括号定义、每段有作者位；
+        # 勿加字母章节/证据徽章/术语说明框/销售战斗卡；战斗卡移出到 sales_card.md
+        out.append("<!-- 五段式正文 Agent 手写区 -->")
+        out.append(f'<h2 style="{THEME["h2"]}">一、钩子</h2>')
+        out.append(f'<h2 style="{THEME["h2"]}">二、判断</h2>')
+        out.append(f'<h2 style="{THEME["h2"]}">三、证据</h2>')
+        out.append(f'<h2 style="{THEME["h2_orange"]}">四、边界</h2>')
+        out.append(f'<h2 style="{THEME["h2"]}">五、落点</h2>')
+        _notes = as_list(d.get("source_notes"))
+        if _notes:
+            out.append(
+                f'<section style="{THEME["soft"]}"><span style="color:#0b1430;font-weight:800;">数据来源：</span>'
+                + "；".join(esc(str(n)) for n in _notes)
+                + "</section>"
+            )
+    if not five_seg:
 
-    out.append(f'<h2 style="{THEME["h2"]}">A. 研究问题</h2>')
-    out.extend(render_paragraphs(d.get("A_research_problem") or ""))
+        glossary = as_list(d.get("glossary") or d.get("terminology_notes"))
+        if glossary:
+            out.append(f'<section style="{THEME["soft"]}">')
+            out.append(f'<p style="{THEME["p"]}"><span style="color:#0b1430;font-weight:800;">术语说明</span></p>')
+            for item in glossary:
+                term, definition = item_parts(item)
+                if term and definition:
+                    out.append(f'<p style="{THEME["term"]}"><span style="color:#0b1430;font-weight:700;">{esc(term)}</span>：{esc(definition)}</p>')
+                else:
+                    out.append(f'<p style="{THEME["term"]}">{esc(term or definition)}</p>')
+            out.append("</section>")
 
-    out.append(f'<h2 style="{THEME["h2"]}">B. 核心贡献</h2>')
-    out.append(render_bullets(as_list(d.get("B_core_contributions"))))
+        out.append(f'<h2 style="{THEME["h2"]}">A. 研究问题</h2>')
+        out.extend(render_paragraphs(d.get("A_research_problem") or ""))
 
-    out.append(f'<h2 style="{THEME["h2"]}">C. 方法 / 框架</h2>')
-    out.extend(render_paragraphs(d.get("C_method_framework") or ""))
-    for section in as_list(d.get("method_subsections")):
-        title_text, body = item_parts(section)
-        if title_text:
-            out.append(f'<h3 style="{THEME["h3"]}">{esc(title_text)}</h3>')
-        if body:
-            out.extend(render_paragraphs(body))
+        out.append(f'<h2 style="{THEME["h2"]}">B. 核心贡献</h2>')
+        out.append(render_bullets(as_list(d.get("B_core_contributions"))))
 
-    out.append(f'<h2 style="{THEME["h2_orange"]}">D. 关键结果</h2>')
-    # 兼容新旧字段名：table (旧) / result_table (新)
-    table_data = d.get("result_table") or d.get("table")
-    result_cards = render_result_cards(table_data)
-    if result_cards:
-        out.append(result_cards)
-    elif table_data:
-        out.append(render_table(table_data))
-    else:
-        out.append(render_bullets(as_list(d.get("D_key_results"))))
+        out.append(f'<h2 style="{THEME["h2"]}">C. 方法 / 框架</h2>')
+        out.extend(render_paragraphs(d.get("C_method_framework") or ""))
+        for section in as_list(d.get("method_subsections")):
+            title_text, body = item_parts(section)
+            if title_text:
+                out.append(f'<h3 style="{THEME["h3"]}">{esc(title_text)}</h3>')
+            if body:
+                out.extend(render_paragraphs(body))
 
-    # Optional: concentrated failure-mode list (One Fact — list once in D)
-    failure_modes = d.get("failure_modes")
-    if isinstance(failure_modes, dict) and failure_modes.get("items"):
-        fm_title = str(failure_modes.get("title") or "反复失败模式").strip()
-        fm_intro = str(failure_modes.get("intro") or "").strip()
-        out.append(f'<h3 style="{THEME["h3"]}">{esc(fm_title)}</h3>')
-        if fm_intro:
-            out.extend(render_paragraphs(fm_intro))
-        out.append(render_bullets(as_list(failure_modes.get("items"))))
+        out.append(f'<h2 style="{THEME["h2_orange"]}">D. 关键结果</h2>')
+        # 兼容新旧字段名：table (旧) / result_table (新)
+        table_data = d.get("result_table") or d.get("table")
+        result_cards = render_result_cards(table_data)
+        if result_cards:
+            out.append(result_cards)
+        elif table_data:
+            out.append(render_table(table_data))
+        else:
+            out.append(render_bullets(as_list(d.get("D_key_results"))))
 
-    source_notes = as_list(d.get("source_notes"))
-    so_what = d.get("so_what") or ""
-    if source_notes or so_what:
-        out.append(f'<blockquote style="{THEME["insight"]}">')
-        for note in source_notes:
-            out.append(f'<p style="margin:0 0 8px;"><span style="color:#0b1430;font-weight:800;">数据来源：</span>{esc(note)}</p>')
-        if so_what:
-            out.append(f'<p style="margin:0;"><span style="color:#0b1430;font-weight:800;">So What：</span>{esc(so_what)}</p>')
-        out.append("</blockquote>")
+        # Optional: concentrated failure-mode list (One Fact — list once in D)
+        failure_modes = d.get("failure_modes")
+        if isinstance(failure_modes, dict) and failure_modes.get("items"):
+            fm_title = str(failure_modes.get("title") or "反复失败模式").strip()
+            fm_intro = str(failure_modes.get("intro") or "").strip()
+            out.append(f'<h3 style="{THEME["h3"]}">{esc(fm_title)}</h3>')
+            if fm_intro:
+                out.extend(render_paragraphs(fm_intro))
+            out.append(render_bullets(as_list(failure_modes.get("items"))))
 
-
-    out.append(f'<h2 style="{THEME["h2"]}">E. 产业启示</h2>')
-    implications = as_list(d.get("E_industry_implications"))
-    if implications and all(isinstance(x, dict) for x in implications):
-        for idx, item in enumerate(implications, 1):
-            title_text, body = item_parts(item)
-            out.append(f'<section style="{THEME["e_card"]}"><span style="{THEME["e_badge"]}">{idx:02d}</span><span style="{THEME["e_body"]}">{esc(title_text)}</span></section>')
-            out.extend(render_paragraphs(body))
-    else:
-        for idx, item in enumerate(implications, 1):
-            _, body = item_parts(item)
-            text = body.strip()
-            prefix = f"{idx:02d}"
-            if text[:2].isdigit():
-                prefix = text[:2]
-                text = text[2:].lstrip(" .。")
-            out.append(f'<section style="{THEME["e_card"]}"><span style="{THEME["e_badge"]}">{esc(prefix)}</span><span style="{THEME["e_body"]}">{esc(text)}</span></section>')
-    if d.get("feige_view"):
-        feige_text = strip_label(str(d.get("feige_view")), "飞哥视角")
-        out.append(f'<blockquote style="{THEME["feige"]}"><span style="font-weight:800;color:#93c5fd;">飞哥视角：</span>{esc(feige_text)}</blockquote>')
-
-    out.append(f'<h2 style="{THEME["h2"]}">{esc(d.get("F_section_title") or "F. 一句话判断")}</h2>')
-    out.extend(render_paragraphs(d.get("F_one_line_judgement") or ""))
-    limitations = as_list(d.get("limitations"))
-    if limitations:
-        # 「结论与边界」仍保留「限制面」小标题，满足 QA 完整性检查，同时不再单开一层主章节。
-        out.append(f'<section style="{THEME["limit"]}">')
-        out.append(f'<p style="margin:0 0 8px;color:#9a3412;font-weight:800;">限制面</p>')
-        out.append(render_bullets(limitations))
-        out.append("</section>")
+        source_notes = as_list(d.get("source_notes"))
+        so_what = d.get("so_what") or ""
+        if source_notes or so_what:
+            out.append(f'<blockquote style="{THEME["insight"]}">')
+            for note in source_notes:
+                out.append(f'<p style="margin:0 0 8px;"><span style="color:#0b1430;font-weight:800;">数据来源：</span>{esc(note)}</p>')
+            if so_what:
+                out.append(f'<p style="margin:0;"><span style="color:#0b1430;font-weight:800;">So What：</span>{esc(so_what)}</p>')
+            out.append("</blockquote>")
 
 
-    # 业务落地指引（销售导向 · Battlecard 格式）
-    # 借鉴 pm-skills/pm-go-to-market 的 competitive-battlecard 框架
-    target_audience = as_list(d.get("target_audience"))
-    sales_use_cases = as_list(d.get("sales_use_cases"))
-    objection_handling = as_list(d.get("objection_handling"))
-    copy_paste_lines = as_list(d.get("copy_paste_lines"))
-    key_quotes = as_list(d.get("key_quotes"))
+        out.append(f'<h2 style="{THEME["h2"]}">E. 产业启示</h2>')
+        implications = as_list(d.get("E_industry_implications"))
+        if implications and all(isinstance(x, dict) for x in implications):
+            for idx, item in enumerate(implications, 1):
+                title_text, body = item_parts(item)
+                out.append(f'<section style="{THEME["e_card"]}"><span style="{THEME["e_badge"]}">{idx:02d}</span><span style="{THEME["e_body"]}">{esc(title_text)}</span></section>')
+                out.extend(render_paragraphs(body))
+        else:
+            for idx, item in enumerate(implications, 1):
+                _, body = item_parts(item)
+                text = body.strip()
+                prefix = f"{idx:02d}"
+                if text[:2].isdigit():
+                    prefix = text[:2]
+                    text = text[2:].lstrip(" .。")
+                out.append(f'<section style="{THEME["e_card"]}"><span style="{THEME["e_badge"]}">{esc(prefix)}</span><span style="{THEME["e_body"]}">{esc(text)}</span></section>')
+        if d.get("feige_view"):
+            feige_text = strip_label(str(d.get("feige_view")), "飞哥视角")
+            out.append(f'<blockquote style="{THEME["feige"]}"><span style="font-weight:800;color:#93c5fd;">飞哥视角：</span>{esc(feige_text)}</blockquote>')
 
-    if target_audience or sales_use_cases or objection_handling or copy_paste_lines or key_quotes:
-        out.append(f'<section style="{THEME["soft"]}">')
-        out.append(f'<p style="{THEME["p"]}"><span style="color:#0b1430;font-weight:800;">🎯 销售战斗卡</span></p>')
+        out.append(f'<h2 style="{THEME["h2"]}">{esc(d.get("F_section_title") or "F. 一句话判断")}</h2>')
+        out.extend(render_paragraphs(d.get("F_one_line_judgement") or ""))
+        limitations = as_list(d.get("limitations"))
+        if limitations:
+            # 「结论与边界」仍保留「限制面」小标题，满足 QA 完整性检查，同时不再单开一层主章节。
+            out.append(f'<section style="{THEME["limit"]}">')
+            out.append(f'<p style="margin:0 0 8px;color:#9a3412;font-weight:800;">限制面</p>')
+            out.append(render_bullets(limitations))
+            out.append("</section>")
 
-        if target_audience:
-            out.append(f'<p style="margin:12px 0 4px;"><span style="color:#0b1430;font-weight:700;">👥 对谁有用</span></p>')
-            out.append(render_bullets(target_audience))
 
-        if sales_use_cases:
-            out.append(f'<p style="margin:12px 0 4px;"><span style="color:#0b1430;font-weight:700;">💼 可以用在什么场景</span></p>')
-            out.append(render_bullets(sales_use_cases))
+        # 业务落地指引（销售导向 · Battlecard 格式）
+        # 借鉴 pm-skills/pm-go-to-market 的 competitive-battlecard 框架
+        target_audience = as_list(d.get("target_audience"))
+        sales_use_cases = as_list(d.get("sales_use_cases"))
+        objection_handling = as_list(d.get("objection_handling"))
+        copy_paste_lines = as_list(d.get("copy_paste_lines"))
+        key_quotes = as_list(d.get("key_quotes"))
 
-        if objection_handling:
-            out.append(f'<p style="margin:12px 0 4px;"><span style="color:#0b1430;font-weight:700;">🛡️ 常见反对意见回应</span></p>')
-            out.append(render_bullets(objection_handling))
+        if target_audience or sales_use_cases or objection_handling or copy_paste_lines or key_quotes:
+            out.append(f'<section style="{THEME["soft"]}">')
+            out.append(f'<p style="{THEME["p"]}"><span style="color:#0b1430;font-weight:800;">🎯 销售战斗卡</span></p>')
 
-        if copy_paste_lines:
-            out.append(f'<p style="margin:12px 0 4px;"><span style="color:#0b1430;font-weight:700;">📋 可以直接复制的话术</span></p>')
-            for line in copy_paste_lines:
-                out.append(f'<blockquote style="{THEME.get("quote", THEME["soft"])}">{esc(str(line))}</blockquote>')
+            if target_audience:
+                out.append(f'<p style="margin:12px 0 4px;"><span style="color:#0b1430;font-weight:700;">👥 对谁有用</span></p>')
+                out.append(render_bullets(target_audience))
 
-        if key_quotes:
-            quote_label = "报告金句" if d.get("content_label") == "技术报告速记" else "论文金句"
-            out.append(f'<p style="margin:12px 0 4px;"><span style="color:#0b1430;font-weight:700;">💬 {esc(quote_label)}</span></p>')
-            out.append(render_bullets(key_quotes))
+            if sales_use_cases:
+                out.append(f'<p style="margin:12px 0 4px;"><span style="color:#0b1430;font-weight:700;">💼 可以用在什么场景</span></p>')
+                out.append(render_bullets(sales_use_cases))
 
-        out.append("</section>")
+            if objection_handling:
+                out.append(f'<p style="margin:12px 0 4px;"><span style="color:#0b1430;font-weight:700;">🛡️ 常见反对意见回应</span></p>')
+                out.append(render_bullets(objection_handling))
+
+            if copy_paste_lines:
+                out.append(f'<p style="margin:12px 0 4px;"><span style="color:#0b1430;font-weight:700;">📋 可以直接复制的话术</span></p>')
+                for line in copy_paste_lines:
+                    out.append(f'<blockquote style="{THEME.get("quote", THEME["soft"])}">{esc(str(line))}</blockquote>')
+
+            if key_quotes:
+                quote_label = "报告金句" if d.get("content_label") == "技术报告速记" else "论文金句"
+                out.append(f'<p style="margin:12px 0 4px;"><span style="color:#0b1430;font-weight:700;">💬 {esc(quote_label)}</span></p>')
+                out.append(render_bullets(key_quotes))
+
+            out.append("</section>")
 
     source_urls = []
     link = info.get("link")
@@ -463,6 +482,7 @@ def main() -> None:
     parser.add_argument("--out", default="article_wechat_safe.html")
     parser.add_argument("--html-title", default="")
     parser.add_argument("--html-conclusion", default="")
+    parser.add_argument("--five-seg", action="store_true", help="五段式叙事流模式：只生成骨架+footnote，正文由 Agent 手写")
     parser.add_argument("--footer-mode", default="text", choices=["auto", "image", "text"],
                         help="footer模式: text=公众号推荐安全(默认), auto=优先图片否则文字, image=强制图片")
     parser.add_argument("--author-qr", default="",
@@ -486,7 +506,7 @@ def main() -> None:
         AUTHOR_SIGNATURE = ""
 
     data = json.loads(payload_path.read_text(encoding="utf-8"))
-    html_text = render(data, out_dir, title=args.html_title, conclusion=args.html_conclusion, footer_mode=args.footer_mode)
+    html_text = render(data, out_dir, title=args.html_title, conclusion=args.html_conclusion, footer_mode=args.footer_mode, five_seg=args.five_seg)
     out_path = out_dir / args.out
     out_path.write_text(html_text, encoding="utf-8")
     print(out_path)
