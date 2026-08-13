@@ -1,7 +1,7 @@
 DATE ?= $(shell date +%Y%m%d)
 MODE ?= publish
 
-.PHONY: help phase1 deepseek-candidates deepseek-payload deepseek-review standardize preflight qa backfill backfill-evidence theme-index
+.PHONY: help phase1 deepseek-candidates deepseek-payload deepseek-review standardize preflight qa gate5 platform-precheck backfill backfill-evidence theme-index
 
 help:
 	@echo "paper-notes commands"
@@ -12,6 +12,8 @@ help:
 	@echo "  make standardize"
 	@echo "  make preflight OUT_DIR=/abs/path MODE=publish"
 	@echo "  make qa OUT_DIR=/abs/path MODE=publish"
+	@echo "  make gate5 OUT_DIR=/abs/path"
+	@echo "  make platform-precheck OUT_DIR=/abs/path"
 	@echo "  make backfill OUT_DIR=/abs/path"
 	@echo "  make backfill-evidence DATE_FROM=YYYYMMDD DATE_TO=YYYYMMDD"
 	@echo "  make theme-index MONTH=YYYYMM"
@@ -40,6 +42,14 @@ preflight:
 qa:
 	@if [ -z "$(OUT_DIR)" ]; then echo "OUT_DIR is required"; exit 1; fi
 	python3 scripts/production/qa_check.py --out-dir "$(OUT_DIR)" --mode $(MODE)
+
+gate5:
+	@if [ -z "$(OUT_DIR)" ]; then echo "OUT_DIR is required"; exit 1; fi
+	python3 ../wechat-reports/tools/wechat-gate5/check_gate5.py --paper-notes-out "$(OUT_DIR)" --report-dir "$(OUT_DIR)"
+
+platform-precheck:
+	@if [ -z "$(OUT_DIR)" ]; then echo "OUT_DIR is required"; exit 1; fi
+	python3 scripts/production/platform_precheck_scan.py --out-dir "$(OUT_DIR)"
 
 backfill:
 	@if [ -z "$(OUT_DIR)" ]; then echo "OUT_DIR is required"; exit 1; fi

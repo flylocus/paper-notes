@@ -148,8 +148,9 @@ def render_result_cards(table: dict | None) -> str:
     return "\n".join(out)
 
 
-# ── 作者签名（直接插图版）────────────────────
+# ── 作者签名（直接插图版；默认推荐安全卡，无加微/个人码）────────────────────
 AUTHOR_SIGNATURE_FILE = "author-signature-card.png"
+DEFAULT_SAFE_SIGNATURE = Path(__file__).resolve().parents[2] / "assets" / "author_signature_image_safe.png"
 AUTHOR_SIGNATURE = f'''<section style="margin:24px 0 8px;text-align:center;border-radius:8px;overflow:hidden;">
   <img src="{AUTHOR_SIGNATURE_FILE}" alt="申飞" style="width:100%;display:block;border:0;border-radius:8px;" />
 </section>'''
@@ -160,6 +161,8 @@ def render_footer(out_dir: Path, mode: str = "auto") -> str:
     - mode="image": 强制用图片footer（本地HTML/其他平台/兜底）
     - mode="text": 强制用文字版（公众号发布，配合微信原生账号卡）
     - mode="auto": 优先图片，不存在则用文字
+
+    2026-07-16+: 公众号公域推荐场景优先 text（避免双号二维码互推被判导流）。
     """
     if mode in ["image", "auto"]:
         candidates = [
@@ -205,7 +208,8 @@ def render(d: dict, out_dir: Path, *, title: str = "", conclusion: str = "", foo
 
     out.append(f'<section style="{THEME["hero"]}">')
     out.append(f'<p style="{THEME["hero_p"]}">{esc(info.get("title"))}</p>')
-    out.append(f'<span style="{THEME["meta"]}">arXiv：{esc(info.get("link"))}</span>')
+    source_label = info.get("source_label") or "arXiv"
+    out.append(f'<span style="{THEME["meta"]}">{esc(source_label)}：{esc(info.get("link"))}</span>')
     out.append(f'<span style="{THEME["meta"]}">评分：{total_text} / 10</span>')
     if info.get("title_cn"):
         out.append(f'<span style="{THEME["meta"]}">{esc(info.get("title_cn"))}</span>')
@@ -219,18 +223,29 @@ def render(d: dict, out_dir: Path, *, title: str = "", conclusion: str = "", foo
     score_img = out_dir / "score_card.png"
     info_img = out_dir / "info_card.png"
 
+    def _append_intro_lead() -> None:
+        # One Fact, One Place：intro_lead 不得默认复读 so_what。
+        # - 显式提供 intro_lead 且非空 → 渲染
+        # - 显式提供空串 / null → 跳过（避免与 So What 重复）
+        # - 未提供字段 → 兼容旧稿，回退 so_what / feige_view
+        if "intro_lead" in d:
+            lead = str(d.get("intro_lead") or "").strip()
+            if not lead:
+                return
+        else:
+            lead = str(d.get("so_what") or d.get("feige_view") or "").strip()
+            if not lead:
+                lead = "快速了解这篇论文的核心价值与产业意义。"
+        out.append(f'<section style="{THEME["intro_lead"]}">💡 {esc(lead)}</section>')
+
     if header_img.exists():
         # 9:16 竖版模式：居中显示，左右留白，适配手机窄屏
         out.append(f'<section style="margin:10px 0;text-align:center;"><img src="header_card.png" alt="论文评分与信息" style="max-width:100%;width:360px;display:inline-block;border:0;border-radius:8px;" /></section>')
-        so_what = d.get("so_what", "") or d.get("feige_view", "") or ""
-        intro_lead = so_what.strip() if so_what.strip() else "快速了解这篇论文的核心价值与产业意义。"
-        out.append(f'<section style="{THEME["intro_lead"]}">💡 {esc(intro_lead)}</section>')
+        _append_intro_lead()
     elif score_img.exists() and info_img.exists():
         # 双图模式：两张图 + HTML元信息（向后兼容）
         out.append(f'<section style="{THEME["image"]}"><img src="score_card.png" alt="评分卡" style="{THEME["img"]}" /></section>')
-        so_what = d.get("so_what", "") or d.get("feige_view", "") or ""
-        intro_lead = so_what.strip() if so_what.strip() else "快速了解这篇论文的核心价值与产业意义。"
-        out.append(f'<section style="{THEME["intro_lead"]}">💡 {esc(intro_lead)}</section>')
+        _append_intro_lead()
 
         authors = ", ".join(info.get("authors", [])[:5])
         if len(info.get("authors", [])) > 5:
@@ -246,7 +261,7 @@ def render(d: dict, out_dir: Path, *, title: str = "", conclusion: str = "", foo
         if affiliations:
             out.append(f'<p style="{THEME["info_row"]}"><span style="{THEME["info_label"]}">机构：</span>{esc(str(affiliations))}</p>')
         if link:
-            out.append(f'<p style="{THEME["info_row"]}"><span style="{THEME["info_label"]}">链接：</span><a href="{esc(link)}" style="{THEME["info_link"]}">{esc(link)}</a></p>')
+            out.append(f'<p style="{THEME["info_row"]}"><span style="{THEME["info_label"]}">链接：</span><span style="{THEME["info_link"]}">{esc(link)}</span></p>')
         out.append(f'<p style="{THEME["info_row"]}"><span style="{THEME["info_label"]}">评分：</span>{total_text} / 10</p>')
         out.append('</section>')
 
@@ -287,6 +302,17 @@ def render(d: dict, out_dir: Path, *, title: str = "", conclusion: str = "", foo
         out.append(render_table(table_data))
     else:
         out.append(render_bullets(as_list(d.get("D_key_results"))))
+
+    # Optional: concentrated failure-mode list (One Fact — list once in D)
+    failure_modes = d.get("failure_modes")
+    if isinstance(failure_modes, dict) and failure_modes.get("items"):
+        fm_title = str(failure_modes.get("title") or "反复失败模式").strip()
+        fm_intro = str(failure_modes.get("intro") or "").strip()
+        out.append(f'<h3 style="{THEME["h3"]}">{esc(fm_title)}</h3>')
+        if fm_intro:
+            out.extend(render_paragraphs(fm_intro))
+        out.append(render_bullets(as_list(failure_modes.get("items"))))
+
     source_notes = as_list(d.get("source_notes"))
     so_what = d.get("so_what") or ""
     if source_notes or so_what:
@@ -296,6 +322,7 @@ def render(d: dict, out_dir: Path, *, title: str = "", conclusion: str = "", foo
         if so_what:
             out.append(f'<p style="margin:0;"><span style="color:#0b1430;font-weight:800;">So What：</span>{esc(so_what)}</p>')
         out.append("</blockquote>")
+
 
     out.append(f'<h2 style="{THEME["h2"]}">E. 产业启示</h2>')
     implications = as_list(d.get("E_industry_implications"))
@@ -317,14 +344,16 @@ def render(d: dict, out_dir: Path, *, title: str = "", conclusion: str = "", foo
         feige_text = strip_label(str(d.get("feige_view")), "飞哥视角")
         out.append(f'<blockquote style="{THEME["feige"]}"><span style="font-weight:800;color:#93c5fd;">飞哥视角：</span>{esc(feige_text)}</blockquote>')
 
-    out.append(f'<h2 style="{THEME["h2"]}">F. 一句话判断</h2>')
+    out.append(f'<h2 style="{THEME["h2"]}">{esc(d.get("F_section_title") or "F. 一句话判断")}</h2>')
     out.extend(render_paragraphs(d.get("F_one_line_judgement") or ""))
     limitations = as_list(d.get("limitations"))
     if limitations:
+        # 「结论与边界」仍保留「限制面」小标题，满足 QA 完整性检查，同时不再单开一层主章节。
         out.append(f'<section style="{THEME["limit"]}">')
         out.append(f'<p style="margin:0 0 8px;color:#9a3412;font-weight:800;">限制面</p>')
         out.append(render_bullets(limitations))
         out.append("</section>")
+
 
     # 业务落地指引（销售导向 · Battlecard 格式）
     # 借鉴 pm-skills/pm-go-to-market 的 competitive-battlecard 框架
@@ -356,7 +385,8 @@ def render(d: dict, out_dir: Path, *, title: str = "", conclusion: str = "", foo
                 out.append(f'<blockquote style="{THEME.get("quote", THEME["soft"])}">{esc(str(line))}</blockquote>')
 
         if key_quotes:
-            out.append(f'<p style="margin:12px 0 4px;"><span style="color:#0b1430;font-weight:700;">💬 论文金句</span></p>')
+            quote_label = "报告金句" if d.get("content_label") == "技术报告速记" else "论文金句"
+            out.append(f'<p style="margin:12px 0 4px;"><span style="color:#0b1430;font-weight:700;">💬 {esc(quote_label)}</span></p>')
             out.append(render_bullets(key_quotes))
 
         out.append("</section>")
@@ -364,7 +394,8 @@ def render(d: dict, out_dir: Path, *, title: str = "", conclusion: str = "", foo
     source_urls = []
     link = info.get("link")
     if link:
-        source_urls.append(("arXiv 摘要", link))
+        source_label = info.get("source_label") or "arXiv 摘要"
+        source_urls.append((source_label, link))
     for key in ["code", "code_url", "dataset", "dataset_url", "project_url"]:
         value = d.get(key) or info.get(key)
         if value:
@@ -372,7 +403,46 @@ def render(d: dict, out_dir: Path, *, title: str = "", conclusion: str = "", foo
     if source_urls:
         out.append(f'<h2 style="{THEME["h2"]}">来源链接</h2>')
         for label, url in source_urls:
-            out.append(f'<section style="{THEME["source"]}"><span style="color:#0b1430;font-weight:800;">{esc(label)}</span><br/><a href="{esc(url)}" style="color:#2563eb;text-decoration:none;">{esc(url)}</a></section>')
+            out.append(f'<section style="{THEME["source"]}"><span style="color:#0b1430;font-weight:800;">{esc(label)}</span><br/><span style="color:#2563eb;text-decoration:none;">{esc(url)}</span></section>')
+
+    # 同题精选：放在来源链接之后、footer/签名之前（对齐 Beyond Leaderboard 样式）
+    related = d.get("related_theme_picks") or {}
+    related_items = related.get("items") if isinstance(related, dict) else None
+    if isinstance(related_items, list) and related_items:
+        theme = str(related.get("theme") or "").strip() or "同题"
+        intro = str(related.get("intro") or "").strip()
+        n = len(related_items)
+        out.append(f'<section style="{THEME["divider"]}"></section>')
+        out.append(
+            f'<h2 style="{THEME["h2"]}">同题精选（{n}）'
+            + (f'· {esc(theme)}' if theme else '')
+            + '</h2>'
+        )
+        if intro:
+            out.append(
+                f'<p style="margin:9px 0;color:#334155;font-size:15px;line-height:1.75;">{esc(intro)}</p>'
+            )
+        out.append('<ol style="padding-left:22px;margin:8px 0 14px;">')
+        for item in related_items:
+            if not isinstance(item, dict):
+                continue
+            title_cn = str(item.get("title_cn") or "").strip()
+            one_liner = str(item.get("one_liner") or "").strip()
+            link = str(item.get("link") or "").strip()
+            arxiv_id = str(item.get("arxiv_id") or "").strip()
+            account = str(item.get("account") or "").strip()
+            id_bit = f'（{esc(arxiv_id)}）' if arxiv_id else (f'（{esc(account)}）' if account else '')
+            dash = f'—— {esc(one_liner)}' if one_liner else ''
+            out.append(
+                f'<li style="margin:8px 0;color:#334155;font-size:15px;line-height:1.75;">'
+                f'<strong>{esc(title_cn)}</strong>{id_bit}{dash}'
+            )
+            if link:
+                out.append(
+                    f'<br/><span style="color:#2563eb;font-size:13px;">{esc(link)}</span>'
+                )
+            out.append('</li>')
+        out.append('</ol>')
 
     footer = render_footer(out_dir, mode=footer_mode)
     if footer:
@@ -393,26 +463,27 @@ def main() -> None:
     parser.add_argument("--out", default="article_wechat_safe.html")
     parser.add_argument("--html-title", default="")
     parser.add_argument("--html-conclusion", default="")
-    parser.add_argument("--footer-mode", default="auto", choices=["auto", "image", "text"],
-                        help="footer模式: auto=优先图片否则文字, image=强制图片, text=强制文字(公众号模式)")
+    parser.add_argument("--footer-mode", default="text", choices=["auto", "image", "text"],
+                        help="footer模式: text=公众号推荐安全(默认), auto=优先图片否则文字, image=强制图片")
     parser.add_argument("--author-qr", default="",
-                        help="作者微信二维码图片路径，提供则自动注入作者签名并复制二维码到输出目录")
+                        help="作者签名卡图片路径；默认用 assets/author_signature_image_safe.png（无加微/个人码）。传旧版加微卡会限推荐。")
     args = parser.parse_args()
 
     payload_path = Path(args.article_payload)
     out_dir = Path(args.out_dir)
-    out_dir.mkdir(parents=True, exist_ok=bool(args.author_qr))
+    out_dir.mkdir(parents=True, exist_ok=True)
 
-    # 作者签名：如果提供签名卡路径，复制并全局开启
+    # 作者签名：默认推荐安全卡；显式 --author-qr 可覆盖
     global AUTHOR_SIGNATURE
-    if args.author_qr:
-        qr_src = Path(args.author_qr)
-        if qr_src.exists():
-            import shutil
-            shutil.copy2(qr_src, out_dir / AUTHOR_SIGNATURE_FILE)
-        else:
-            print(f"⚠ 签名卡图片未找到: {args.author_qr}，跳过作者签名")
-            AUTHOR_SIGNATURE = ""
+    import shutil
+    qr_src = Path(args.author_qr) if args.author_qr else DEFAULT_SAFE_SIGNATURE
+    if qr_src.exists():
+        shutil.copy2(qr_src, out_dir / AUTHOR_SIGNATURE_FILE)
+        if qr_src.name == "author_signature_image.png":
+            print("⚠ 警告: 旧版加微/个人码签名卡，公域推荐风险高；请改用 author_signature_image_safe.png")
+    else:
+        print(f"⚠ 签名卡图片未找到: {qr_src}，跳过作者签名")
+        AUTHOR_SIGNATURE = ""
 
     data = json.loads(payload_path.read_text(encoding="utf-8"))
     html_text = render(data, out_dir, title=args.html_title, conclusion=args.html_conclusion, footer_mode=args.footer_mode)

@@ -1,0 +1,453 @@
+schema_version: "1.0"
+status: shadow
+updated: "2026-07-31"
+purpose: "AI 论文速记字幕/口播双轨术语真源"
+
+policy:
+  brands_models_frameworks: keep_standard_english_pronunciation
+  technical_concepts: chinese_first
+  numbers: natural_spoken_chinese
+  acronyms: spell_letters_then_add_chinese_function
+  subtitle_voice_alignment: semantic_one_to_one
+  provider_overrides: require_short_listening_review
+
+notes:
+  - "speak_default 描述发音目标，不承诺任一 TTS provider 会自动读对。"
+  - "provider_overrides 只有经过对应音色短审后才能填写并锁定。"
+  - "字幕保留标准拼写；配音可中文化，但不得改变事实、数字、基线或限定条件。"
+  - "Codex 的 Code X 等拆词写法只作为 provider 候选，未经短审不得成为默认。"
+
+terms:
+  Qwen:
+    category: model_brand
+    subtitle: "Qwen"
+    speak_default: "千问"
+    first_mention: "千问"
+    later_mention: "千问"
+    review_status: approved_semantic_2026-08-04
+    provider_overrides:
+      "minimax:speech-2.8-hd:shenfei_intent_v1":
+        tts_text: "千问"
+        approved: "2026-08-04"
+        note: "申飞指定：论文中 Qwen 一律口播为千问。"
+
+  AI:
+    category: acronym
+    subtitle: "AI"
+    speak_default: "A I"
+    first_mention: "A I"
+    later_mention: "A I"
+    review_status: approved_provider_minimax_shenfei_intent_v1_2026-07-31
+    provider_overrides:
+      "minimax:speech-2.8-hd:shenfei_intent_v1":
+        tts_text: "A I"
+        audition: "paper-notes/outputs/video-drafts/20260731/2607.27191/pronunciation-review/work/generated/shenfei_intent_v1/ai-in-context.wav"
+        approved: "2026-07-31"
+
+  Agent:
+    category: technical_concept
+    subtitle: "Agent"
+    speak_default: "智能体"
+    first_mention: "智能体"
+    later_mention: "智能体"
+    review_status: approved_semantic
+    provider_overrides: {}
+
+  SkillBoost:
+    category: framework_name
+    subtitle: "SkillBoost"
+    speak_default: "Skill Boost"
+    first_mention: "Skill Boost"
+    later_mention: "Skill Boost"
+    review_status: pending_review
+    provider_overrides: {}
+
+  ShadowEval:
+    category: framework_name
+    subtitle: "ShadowEval"
+    speak_default: "Shadow Eval"
+    first_mention: "Shadow Eval"
+    later_mention: "Shadow Eval"
+    review_status: pending_review
+    provider_overrides: {}
+
+  Shadow Evaluation:
+    category: technical_concept
+    subtitle: "Shadow Evaluation"
+    speak_default: "影子评测"
+    first_mention: "影子评测"
+    later_mention: "影子评测"
+    review_status: approved_semantic
+    provider_overrides: {}
+
+  BFCL:
+    category: benchmark_acronym
+    subtitle: "BFCL"
+    speak_default: "B F C L 工具调用基准"
+    first_mention: "B F C L 工具调用基准"
+    later_mention: "B F C L 基准"
+    review_status: pending_review
+    provider_overrides: {}
+
+  Claude:
+    category: model_brand
+    subtitle: "Claude"
+    speak_default: "Claude"
+    first_mention: "Claude"
+    later_mention: "Claude"
+    review_status: pending_review
+    provider_overrides: {}
+
+  Claude Sonnet 4:
+    category: model_name
+    subtitle: "Claude Sonnet 4"
+    speak_default: "Claude Sonnet Four"
+    first_mention: "Claude Sonnet Four"
+    later_mention: "Claude 的 Sonnet Four 模型"
+    review_status: pending_review
+    provider_overrides: {}
+
+  Codex:
+    category: product_brand
+    subtitle: "Codex"
+    speak_default: "Codex"
+    first_mention: "Codex"
+    later_mention: "Codex"
+    provider_candidates:
+      - "Codex"
+      - "Code X"
+    review_status: approved_provider_minimax_shenfei_intent_v1_2026-07-31
+    provider_overrides:
+      "minimax:speech-2.8-hd:shenfei_intent_v1":
+        tts_text: "Codex"
+        audition: "paper-notes/outputs/video-drafts/20260731/2607.27191/pronunciation-review/work/generated/shenfei_intent_v1/codex-default-gpt.wav"
+        approved: "2026-07-31"
+
+  GPT-5.6:
+    category: model_name
+    subtitle: "GPT-5.6"
+    speak_default: "G P T Five Point Six"
+    first_mention: "G P T Five Point Six"
+    later_mention: "G P T Five Point Six"
+    review_status: pending_review
+    provider_overrides: {}
+
+  GPT-5.6 Sol:
+    category: model_name
+    subtitle: "GPT-5.6 Sol"
+    speak_default: "G P T Five Point Six Sol"
+    first_mention: "G P T Five Point Six Sol"
+    later_mention: "G P T Five Point Six Sol"
+    review_status: approved_provider_minimax_shenfei_intent_v1_2026-07-31
+    provider_overrides:
+      "minimax:speech-2.8-hd:shenfei_intent_v1":
+        tts_text: "G P T Five Point Six Sol"
+        audition: "paper-notes/outputs/video-drafts/20260731/2607.27191/pronunciation-review/work/generated/shenfei_intent_v1/codex-default-gpt.wav"
+        context: "与 Codex 的中英连接停顿按已试听版本使用，不增加额外停顿标记。"
+        approved: "2026-07-31"
+
+  Generalization Gap:
+    category: technical_concept
+    subtitle: "Generalization Gap"
+    speak_default: "泛化间隙"
+    first_mention: "泛化间隙"
+    later_mention: "泛化间隙"
+    review_status: approved_semantic
+    provider_overrides: {}
+
+  Regression Coverage:
+    category: technical_concept
+    subtitle: "Regression Coverage"
+    speak_default: "回归覆盖率"
+    first_mention: "回归覆盖率"
+    later_mention: "回归覆盖率"
+    review_status: approved_semantic
+    provider_overrides: {}
+
+  Regression Testing:
+    category: technical_concept
+    subtitle: "Regression Testing"
+    speak_default: "回归测试"
+    first_mention: "回归测试"
+    later_mention: "回归测试"
+    review_status: approved_semantic
+    provider_overrides: {}
+
+  Benchmark:
+    category: technical_concept
+    subtitle: "Benchmark"
+    speak_default: "基准测试"
+    first_mention: "基准测试"
+    later_mention: "基准测试"
+    review_status: approved_semantic
+    provider_overrides: {}
+
+  Inference-time Scaling:
+    category: technical_concept
+    subtitle: "Inference-time Scaling"
+    speak_default: "推理阶段扩展"
+    first_mention: "推理阶段扩展"
+    later_mention: "推理阶段扩展"
+    review_status: approved_semantic
+    provider_overrides: {}
+
+  Tool Calling:
+    category: technical_concept
+    subtitle: "Tool Calling"
+    speak_default: "工具调用"
+    first_mention: "工具调用"
+    later_mention: "工具调用"
+    review_status: approved_semantic
+    provider_overrides: {}
+
+  No-skill:
+    category: experiment_baseline
+    subtitle: "No-skill"
+    speak_default: "无技能基线"
+    first_mention: "无技能基线"
+    later_mention: "无技能基线"
+    review_status: approved_semantic
+    provider_overrides: {}
+
+  Reject:
+    category: review_outcome
+    subtitle: "Reject"
+    speak_default: "拒稿"
+    first_mention: "拒稿"
+    later_mention: "拒稿"
+    review_status: approved_semantic
+    provider_overrides: {}
+
+  Strong Reject:
+    category: review_outcome
+    subtitle: "Strong Reject"
+    speak_default: "强烈拒稿"
+    first_mention: "强烈拒稿"
+    later_mention: "强烈拒稿"
+    review_status: approved_semantic
+    provider_overrides: {}
+
+  Accept:
+    category: review_outcome
+    subtitle: "Accept"
+    speak_default: "接收"
+    first_mention: "接收"
+    later_mention: "接收"
+    review_status: approved_semantic
+    provider_overrides: {}
+
+  G-ReAct:
+    category: framework_name
+    subtitle: "G-ReAct"
+    speak_default: "G React"
+    first_mention: "G React"
+    later_mention: "G React"
+    review_status: pending_review
+    provider_overrides: {}
+
+  BrowseComp-ZH:
+    category: benchmark_acronym
+    subtitle: "BrowseComp-ZH"
+    speak_default: "Browse Comp 中文"
+    first_mention: "Browse Comp 中文"
+    later_mention: "Browse Comp 中文"
+    review_status: pending_review
+    provider_overrides: {}
+
+  XBench-DS:
+    category: benchmark_acronym
+    subtitle: "XBench-DS"
+    speak_default: "X Bench 深搜"
+    first_mention: "X Bench 深搜"
+    later_mention: "X Bench 深搜"
+    review_status: pending_review
+    provider_overrides: {}
+
+  OpenSeeker-v1:
+    category: baseline_name
+    subtitle: "OpenSeeker-v1"
+    speak_default: "Open Seeker 版本一"
+    first_mention: "Open Seeker 版本一"
+    later_mention: "Open Seeker 版本一"
+    review_status: pending_review
+    provider_overrides: {}
+
+  doubao-seed-2.0-pro:
+    category: model_name
+    subtitle: "豆包 Seed 2.0 Pro"
+    speak_default: "豆包 Seed 二点零 Pro"
+    first_mention: "豆包 Seed 二点零 Pro"
+    later_mention: "豆包 Seed"
+    review_status: pending_review
+    provider_overrides: {}
+
+  GAIA:
+    category: benchmark_acronym
+    subtitle: "GAIA"
+    speak_default: "GAIA"
+    first_mention: "GAIA"
+    later_mention: "GAIA"
+    review_status: pending_review
+    provider_overrides: {}
+
+  Echo Gap:
+    category: technical_concept
+    subtitle: "Echo Gap"
+    speak_default: "Echo Gap"
+    first_mention: "Echo Gap"
+    later_mention: "Echo Gap"
+    review_status: pending_review
+    provider_overrides: {}
+
+  LUCID:
+    category: framework_name
+    subtitle: "LUCID"
+    speak_default: "LUCID"
+    first_mention: "LUCID"
+    later_mention: "LUCID"
+    review_status: pending_review
+    provider_overrides: {}
+
+  BIRD:
+    category: benchmark_acronym
+    subtitle: "BIRD"
+    speak_default: "Bird"
+    first_mention: "Bird"
+    later_mention: "Bird"
+    review_status: pending_review
+    provider_overrides: {}
+
+  EIA:
+    category: technical_concept
+    subtitle: "EIA"
+    speak_default: "误差独立假设"
+    first_mention: "误差独立假设"
+    later_mention: "误差独立假设"
+    review_status: pending_review
+    provider_overrides: {}
+
+  text-to-SQL:
+    category: technical_concept
+    subtitle: "text-to-SQL"
+    speak_default: "文本到 SQL"
+    first_mention: "文本到 SQL"
+    later_mention: "文本到 SQL"
+    review_status: pending_review
+    provider_overrides: {}
+
+  token:
+    category: technical_concept
+    subtitle: "token"
+    speak_default: "token"
+    first_mention: "token"
+    later_mention: "token"
+    review_status: approved_semantic
+    provider_overrides: {}
+
+  G-ReAct:
+    category: framework_name
+    subtitle: "G-ReAct"
+    speak_default: "G React"
+    first_mention: "G React"
+    later_mention: "G React"
+    review_status: pending_review
+    provider_overrides: {}
+
+  BrowseComp-ZH:
+    category: benchmark_acronym
+    subtitle: "BrowseComp-ZH"
+    speak_default: "Browse Comp 中文"
+    first_mention: "Browse Comp 中文"
+    later_mention: "Browse Comp 中文"
+    review_status: pending_review
+    provider_overrides: {}
+
+  XBench-DS:
+    category: benchmark_acronym
+    subtitle: "XBench-DS"
+    speak_default: "X Bench 深搜"
+    first_mention: "X Bench 深搜"
+    later_mention: "X Bench 深搜"
+    review_status: pending_review
+    provider_overrides: {}
+
+  OpenSeeker-v1:
+    category: baseline_name
+    subtitle: "OpenSeeker-v1"
+    speak_default: "Open Seeker 版本一"
+    first_mention: "Open Seeker 版本一"
+    later_mention: "Open Seeker 版本一"
+    review_status: pending_review
+    provider_overrides: {}
+
+  doubao-seed-2.0-pro:
+    category: model_name
+    subtitle: "豆包 Seed 2.0 Pro"
+    speak_default: "豆包 Seed 二点零 Pro"
+    first_mention: "豆包 Seed 二点零 Pro"
+    later_mention: "豆包 Seed"
+    review_status: pending_review
+    provider_overrides: {}
+
+  GAIA:
+    category: benchmark_acronym
+    subtitle: "GAIA"
+    speak_default: "GAIA"
+    first_mention: "GAIA"
+    later_mention: "GAIA"
+    review_status: pending_review
+    provider_overrides: {}
+
+  Echo Gap:
+    category: technical_concept
+    subtitle: "Echo Gap"
+    speak_default: "Echo Gap"
+    first_mention: "Echo Gap"
+    later_mention: "Echo Gap"
+    review_status: pending_review
+    provider_overrides: {}
+
+  LUCID:
+    category: framework_name
+    subtitle: "LUCID"
+    speak_default: "LUCID"
+    first_mention: "LUCID"
+    later_mention: "LUCID"
+    review_status: pending_review
+    provider_overrides: {}
+
+  BIRD:
+    category: benchmark_acronym
+    subtitle: "BIRD"
+    speak_default: "Bird"
+    first_mention: "Bird"
+    later_mention: "Bird"
+    review_status: pending_review
+    provider_overrides: {}
+
+  EIA:
+    category: technical_concept
+    subtitle: "EIA"
+    speak_default: "误差独立假设"
+    first_mention: "误差独立假设"
+    later_mention: "误差独立假设"
+    review_status: pending_review
+    provider_overrides: {}
+
+  text-to-SQL:
+    category: technical_concept
+    subtitle: "text-to-SQL"
+    speak_default: "文本到 SQL"
+    first_mention: "文本到 SQL"
+    later_mention: "文本到 SQL"
+    review_status: pending_review
+    provider_overrides: {}
+
+  token:
+    category: technical_concept
+    subtitle: "token"
+    speak_default: "token"
+    first_mention: "token"
+    later_mention: "token"
+    review_status: approved_semantic
+    provider_overrides: {}

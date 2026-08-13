@@ -495,6 +495,14 @@ python3 scripts/production/preflight_check.py \
 make qa OUT_DIR=/Users/shenfei/clawd/paper-notes/outputs/ready/YYYYMMDD/<arxiv_id> MODE=publish
 ```
 
+**可选（2026-07-17 起）**：`make qa` PASS 后跑平台合规词面预检（advisory，不阻断 QA）：
+
+```bash
+make platform-precheck OUT_DIR=/Users/shenfei/clawd/paper-notes/outputs/ready/YYYYMMDD/<arxiv_id>
+```
+
+产出 `platform_precheck_scan.*`；上游 skill 见 `wechat-reports/tools/yuwen-publish-precheck/`。V1.0 规则包面向抖音/小红书/视频号，公众号图文仍靠双号备忘录 + Agent 语义审；与 `make qa` 互补。
+
 近期产物若缺独立证据账本，可只回填 evidence/score，不重写正文：
 
 ```bash
@@ -535,6 +543,8 @@ warning: 0
 脚本生成的是基础发布包。正式发布前，应优先把 `article_editor_ready.html` 人工增强成“数据锚定稿”。
 
 ### 13.1 风格优化 skill
+
+**去 AI 味 / 申飞审稿（文字）**：优先用本仓库 `docs/STYLE_SHENFEI_REVIEW_PROMPT.md`（共用底稿 `clawd/docs/editorial-review-base.md`）；备忘写到当日 `style-shenfei-deai-review-YYYYMMDD.md`。
 
 遇到 paper-notes 发布前/发布后风格优化任务，优先加载：
 

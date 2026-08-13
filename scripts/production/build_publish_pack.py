@@ -34,12 +34,13 @@ def main():
     lines.append('\n## 摘要版文案')
     lines.append(args.summary)
     lines.append('\n## 最终发布前 Checklist')
-    lines.append('- [ ] 确认标题使用哪一版')
+    lines.append('- [ ] 确认标题使用哪一版（**线上用备选 #1**）')
     lines.append('- [ ] 检查 score_card / info_card / cover_235 是否与正文表述一致')
     lines.append('- [ ] 确认作者与机构展示是否符合发布需求（是否需要精简）')
-    lines.append('- [ ] 确认是否保留英文原题与 arXiv 链接')
     lines.append('- [ ] 检查 HTML 在编辑器中的图片相对路径是否正常')
     lines.append('- [ ] 确认正文语气是否符合目标发布渠道')
+    lines.append('- [ ] **粘贴标准：** 见 `docs/WECHAT_PUBLISH_FORMAT.md` — 删顶碎句/来源链接/📚footer/签名图/销售战斗卡；保留同题精选+飞哥视角+So What')
+    lines.append('- [ ] 不上传 `author-signature-card.png`；依赖微信「喜欢作者」')
 
     os.makedirs(os.path.dirname(args.out), exist_ok=True)
     with open(args.out, 'w', encoding='utf-8') as f:

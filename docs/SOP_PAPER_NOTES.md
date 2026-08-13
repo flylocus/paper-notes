@@ -171,20 +171,26 @@
 ### 5.2 生成正文
 至少输出两份：
 1. `note.md`
-2. `article_wechat_safe.html` ⭐ **（公众号发布用，内联样式，无 class）**
+2. `article_wechat_safe.html` ⭐ **（生产/QA 真源，内联样式，无 class）**
 3. `article_editor_ready.html`（deprecated）
 
+**粘贴标准（2026-07-16 起；2026-07-29 修订）：** 本地 HTML 与公众号线上形态有 intentional 裁剪（顶碎句、来源链接、footer、签名图、**销售战斗卡**等）。真源见 **[WECHAT_PUBLISH_FORMAT.md](./WECHAT_PUBLISH_FORMAT.md)**。
+
 ### 5.3 正文结构要求
-按固定结构：
-- 标题
-- 一句话结论
+
+**本地 artifact（QA 验全）：**
+
+- 标题 / 英文题头 / pill
+- 一句话结论 + 💡 顶碎句（可选，粘贴时删）
 - `header_card.png`（360px 宽居中显示）
-- A. 研究问题
-- B. 核心贡献
-- C. 方法/框架
-- D. 关键结果
-- E. 产业启示
-- F. 一句话判断
+- 术语说明
+- A. 研究问题 → F. 一句话判断（含 D 证据卡、So What、E 编号、飞哥视角、限制面）
+- 来源链接
+- 同题精选（3）
+- 📚 关于 paper-notes + 签名图（粘贴时删）
+- （可选残留）🎯 销售战斗卡字段 — **粘贴时删**；2026-07-29 起不再作为线上块
+
+**公众号线上（发布标准）：** 见 [WECHAT_PUBLISH_FORMAT.md](./WECHAT_PUBLISH_FORMAT.md)「线上块序」。
 
 ### 5.4 检查点
 - 输出目录是否真的存在文件

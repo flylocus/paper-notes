@@ -103,9 +103,11 @@ def table_to_html(table):
 
 def render_note_md(d):
     lines = []
-    lines.append(f"# 【论文速记】{d['info']['title_cn']}\n")
+    content_label = d.get('content_label') or '论文速记'
+    lines.append(f"# 【{content_label}】{d['info']['title_cn']}\n")
     lines.append(f"> 原文标题：**{d['info']['title']}**  ")
-    lines.append(f"> arXiv：{d['info']['link']}  ")
+    source_label = d['info'].get('source_label') or 'arXiv'
+    lines.append(f"> {source_label}：{d['info']['link']}  ")
     lines.append(f"> 总评分：**{d['score']['total']:.1f} / 10**\n")
     lines.append("## 评分")
     for x in d['score']['dimensions']:
@@ -137,6 +139,13 @@ def render_note_md(d):
     else:
         for item in d['D_key_results']:
             lines.append(f"- {item_text(item)}")
+    failure_modes = d.get('failure_modes')
+    if isinstance(failure_modes, dict) and failure_modes.get('items'):
+        lines.append(f"\n### {failure_modes.get('title') or '反复失败模式'}")
+        if failure_modes.get('intro'):
+            lines.append(str(failure_modes.get('intro')))
+        for item in as_list(failure_modes.get('items')):
+            lines.append(f"- {item_text(item)}")
     for note in as_list(d.get('source_notes')):
         lines.append(f"\n**数据来源**：{note}")
     if d.get('so_what'):
@@ -148,10 +157,12 @@ def render_note_md(d):
     if d.get('feige_view'):
         lines.append(f"\n**飞哥视角**：{d['feige_view']}")
 
-    lines.append(f"\n## F. 一句话判断\n{d['F_one_line_judgement']}\n")
+    f_title = d.get('F_section_title') or 'F. 一句话判断'
+    lines.append(f"\n## {f_title}\n{d['F_one_line_judgement']}\n")
     limitations = as_list(d.get('limitations'))
     if limitations:
-        lines.append("### 限制面")
+        if '结论与边界' not in str(f_title):
+            lines.append("### 限制面")
         for item in limitations:
             lines.append(f"- {item_text(item)}")
 
@@ -195,7 +206,8 @@ def render_note_md(d):
                 lines.append("")
 
         if battlecard["key_quotes"]:
-            lines.append("\n### 💬 论文金句（可以直接引用）")
+            quote_label = "报告金句" if content_label == "技术报告速记" else "论文金句"
+            lines.append(f"\n### 💬 {quote_label}（可以直接引用）")
             for item in battlecard["key_quotes"]:
                 lines.append(f"- {item_text(item)}")
 
@@ -242,6 +254,16 @@ def render_editor_html(d, title=None, conclusion=None):
             html.append(f"<li>{html_item_text(item)}</li>")
         html.append("</ul>")
 
+    failure_modes = d.get('failure_modes')
+    if isinstance(failure_modes, dict) and failure_modes.get('items'):
+        html.append(f"<h3 class=\"blue-accent\">{failure_modes.get('title') or '反复失败模式'}</h3>")
+        if failure_modes.get('intro'):
+            html.append(f"<p>{failure_modes.get('intro')}</p>")
+        html.append("<ul>")
+        for item in as_list(failure_modes.get('items')):
+            html.append(f"<li>{html_item_text(item)}</li>")
+        html.append("</ul>")
+
     source_notes = as_list(d.get('source_notes'))
     if source_notes or d.get('so_what'):
         html.append('<div class="insight-box">')
@@ -265,10 +287,13 @@ def render_editor_html(d, title=None, conclusion=None):
     if d.get('feige_view'):
         html.append(f"<p><strong>飞哥视角：</strong>{d['feige_view']}</p>")
 
-    html.append(f"\n<h2>F. 一句话判断</h2>\n<p>{d['F_one_line_judgement']}</p>")
+    f_title = d.get('F_section_title') or 'F. 一句话判断'
+    html.append(f"\n<h2>{f_title}</h2>\n<p>{d['F_one_line_judgement']}</p>")
     limitations = as_list(d.get('limitations'))
     if limitations:
-        html.append("<h3 class=\"blue-accent\">限制面</h3><ul>")
+        if '结论与边界' not in str(f_title):
+            html.append("<h3 class=\"blue-accent\">限制面</h3>")
+        html.append("<ul>")
         for item in limitations:
             html.append(f"<li>{html_item_text(item)}</li>")
         html.append("</ul>")

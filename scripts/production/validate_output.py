@@ -484,6 +484,45 @@ def check_so_what_mechanism_judgement(html: str | None, _data: dict | None) -> s
     return None
 
 
+@register_check("html_wechat_safe_integrity", "P0",
+                "article_wechat_safe.html 应完整，无截断且有正确闭合标签")
+def check_html_wechat_safe_integrity(_html: str | None, _data: dict | None, out_dir: Path | None = None) -> str | None:
+    """检查 article_wechat_safe.html 的完整性 - 这是一个带额外参数的特殊检查"""
+    if out_dir is None:
+        return None  # 由传统调用路径时跳过
+    
+    wechat_path = out_dir / "article_wechat_safe.html"
+    if not wechat_path.exists():
+        return "article_wechat_safe.html not found"
+    
+    content = wechat_path.read_text(encoding="utf-8")
+    
+    # 检查是否有正确的结尾标签
+    if not content.strip().endswith("</section></section>"):
+        return "article_wechat_safe.html 结尾缺失正确的闭合标签，可能被截断"
+    
+    # 检查关键部分是否存在
+    required_sections = [
+        ("限制面", "缺少「限制面」部分"),
+        ("来源链接", "缺少「来源链接」部分"),
+        ("关于 paper-notes", "缺少 footer 部分"),
+    ]
+    
+    for section_name, error_msg in required_sections:
+        if section_name not in content:
+            return error_msg
+    
+    # 检查 F 段是否完整
+    f_section = re.search(r'<h2[^>]*>F\.', content)
+    if f_section:
+        after_f = content[f_section.end():]
+        # F 段后应该有限制面
+        if "限制面" not in after_f[:2000]:
+            return "F段后缺少限制面内容，可能被截断"
+    
+    return None
+
+
 # ── Core Logic ─────────────────────────────────────────────────────────────
 
 def load_schema(out_dir: Path) -> dict:
@@ -535,7 +574,12 @@ def run_validation(out_dir: Path, grade_criteria: list[dict]) -> dict:
     issues = []
     for check_fn in CHECKS_REGISTRY:
         try:
-            result = check_fn(html, data)
+            import inspect
+            sig = inspect.signature(check_fn)
+            if len(sig.parameters) >= 3 and 'out_dir' in sig.parameters:
+                result = check_fn(html, data, out_dir=out_dir)
+            else:
+                result = check_fn(html, data)
         except Exception as e:
             result = f"检查器异常（输入数据形态非法）: {type(e).__name__}: {e}"
         if result is not None:
