@@ -1,11 +1,11 @@
 # Paper Notes
 
-Daily B2B paper notes for a WeChat column. Operators lock the topic and write the five segments. Scripts assemble the pack and run gates we can re-check. A green gate does not publish the post.
+Daily B2B paper notes, on a shorter release loop: one production path, operator handoffs, and a gate we can re-run before anyone confirms the WeChat draft.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 
-This repository does not record a before/after cycle time or a customer ROI figure. What changed is the handoff, and what we can show is the gate on each note.
+Operators lock the topic and write the five segments. Scripts assemble the pack and run the gates. A passing gate does not publish the post.
 
 ## The loop
 
